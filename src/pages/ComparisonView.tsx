@@ -3,7 +3,6 @@ import type { LogFile, RelatednessAssessment, Run } from "../types";
 import { RelatednessReminderBadge } from "../components/RelatednessReminderBadge";
 import { ComparisonTable } from "../components/ComparisonTable";
 import { RunSummaryCards } from "../components/RunSummaryCards";
-import { DataValidityBox } from "../components/DataValidityBox";
 import { PairwiseSelector } from "../components/PairwiseSelector";
 import { CacheIntensityChart } from "../components/CacheIntensityChart";
 import { OverheadTrendChart } from "../components/OverheadTrendChart";
@@ -13,6 +12,7 @@ import { HeadlineKpiSection } from "../components/HeadlineKpiSection";
 import { DominantDriverPanel } from "../components/DominantDriverPanel";
 import { ExportButton } from "../components/ExportButton";
 import { SignalLegend } from "../components/SignalLegend";
+import { Icon } from "../components/Icon";
 import { buildComparison } from "../drift/buildComparison";
 import { useSessionStore } from "../state/sessionStore";
 import { writeRecentComparison } from "../state/localHistoryStore";
@@ -26,6 +26,7 @@ export interface ComparisonViewProps {
   evidenceIndex: EvidenceIndex;
   /** When set (e.g. a reopened/imported report), skip recomputation and render this Comparison as-is. */
   precomputedComparison?: Comparison;
+  onNewComparison?: () => void;
 }
 
 export function ComparisonView({
@@ -34,6 +35,7 @@ export function ComparisonView({
   relatednessAssessment,
   evidenceIndex,
   precomputedComparison,
+  onNewComparison,
 }: ComparisonViewProps) {
   const runsById = useMemo(() => new Map(runs.map((run) => [run.id, run])), [runs]);
   const pinnedMetricKeys = useSessionStore((state) => state.pinnedMetricKeys);
@@ -85,6 +87,12 @@ export function ComparisonView({
           <h1 className="app-header-subtitle">{comparison.title}</h1>
         </div>
         <div className="app-header-actions">
+          {onNewComparison && (
+            <button type="button" className="btn btn-ghost" onClick={onNewComparison}>
+              <Icon name="plus" size={14} />
+              New comparison
+            </button>
+          )}
           <ExportButton comparison={comparison} runs={runs} />
         </div>
       </header>
@@ -93,10 +101,9 @@ export function ComparisonView({
 
       <RunSummaryCards runs={runs} logFilesById={logFilesById} comparison={comparison} />
 
-      <DataValidityBox runs={runs} logFilesById={logFilesById} />
-
       {isReopened && (
         <p role="status" className="reopened-report-notice">
+          <Icon name="history" size={14} />
           Reopened from recent comparisons — evidence drill-down uses the already-computed values only.
         </p>
       )}

@@ -45,7 +45,11 @@ export function assessPairwiseRelatedness(
   let confidence: PairwiseRelatedness["confidence"];
   if (!topicallyRelated) {
     confidence = "unrelated";
-  } else if (repoComparison.sameBranch && repoComparison.sameCommit && dirComparison.sameDirectory) {
+  } else if (repoComparison.sameBranch && repoComparison.sameCommit) {
+    // Working-directory differences are surfaced separately as metadata
+    // (workingDirectoryComparison) but must not downgrade confidence — an
+    // A/B comparison of the same repo/commit checked out into two different
+    // working directories is the expected, correct setup, not a mismatch.
     confidence = "related";
   } else {
     confidence = "partial";

@@ -1,3 +1,5 @@
+import { Icon } from "./Icon";
+
 export interface PinMetricToggleProps {
   metricKey: string;
   metricLabel: string;
@@ -16,7 +18,7 @@ export function PinMetricToggle({ metricKey, metricLabel, pinned, onPin, onUnpin
       aria-label={pinned ? `Unpin ${metricLabel}` : `Pin ${metricLabel}`}
       onClick={() => (pinned ? onUnpin(metricKey) : onPin(metricKey))}
     >
-      {pinned ? "★" : "☆"}
+      <Icon name={pinned ? "star-filled" : "star-outline"} size={13} />
     </button>
   );
 }

@@ -23,6 +23,15 @@ export interface FlattenResult {
   startingRepositoryState: RepositoryState;
   records: FlatRecord[];
   unrecognizedEventCount: number;
+  /**
+   * Timestamps of unrecognized events (e.g. housekeeping markers like
+   * "retention_sweep"), kept only as gap-split boundaries for duration
+   * analysis (FR-16) — never surfaced as task events or counted in any
+   * metric. A large gap between two known events that actually spans one of
+   * these often represents idle/away time that concluded when the telemetry
+   * layer did routine housekeeping, not active approval consideration.
+   */
+  unrecognizedEventTimestamps: string[];
 }
 
 interface RawAttribute {
@@ -54,6 +63,34 @@ function timestampFromNano(nano: string | undefined): string {
   return new Date(millis).toISOString();
 }
 
+const GIT_STATUS_MARKER = "gitStatus";
+const GIT_STATUS_WINDOW_CHARS = 2000;
+
+/**
+ * Real Claude Code telemetry carries no `vcs.branch`/`vcs.commit` attributes
+ * at all — the starting repository state instead appears as plain text (a
+ * "# gitStatus" system-reminder block) inside the first `api_request_body`
+ * event's `body` field (FR-7b). That field is itself a JSON-encoded request
+ * payload, so its embedded newlines appear as the literal two-character
+ * sequence "\n" rather than real newline bytes; this normalizes just enough
+ * of that to make the block's lines matchable, without needing a full
+ * (and truncation-fragile) JSON.parse of the whole body.
+ */
+function extractGitStatusRepositoryState(body: string): { branch: string; headCommit: string } | null {
+  const markerIndex = body.indexOf(GIT_STATUS_MARKER);
+  if (markerIndex === -1) return null;
+
+  const window = body
+    .slice(markerIndex, markerIndex + GIT_STATUS_WINDOW_CHARS)
+    .replace(/\\n/g, "\n");
+
+  const branchMatch = /Current branch:\s*(\S+)/.exec(window);
+  const commitMatch = /Recent commits:\s*\n\s*(\S+)/.exec(window);
+  if (!branchMatch || !commitMatch) return null;
+
+  return { branch: branchMatch[1], headCommit: commitMatch[1] };
+}
+
 export function flattenLogRecords(rawLines: unknown[]): FlattenResult {
   let sessionIdentifier = "";
   let buildVersion = "";
@@ -61,6 +98,10 @@ export function flattenLogRecords(rawLines: unknown[]): FlattenResult {
   const repositoryState: RepositoryState = { branch: null, headCommit: null, workingDirectory: "" };
   const records: FlatRecord[] = [];
   let unrecognizedEventCount = 0;
+  const unrecognizedEventTimestamps: string[] = [];
+  // First (starting) gitStatus snapshot only — a later one mid-session may
+  // reflect commits the agent itself made, not the starting state.
+  let gitStatusRepositoryState: { branch: string; headCommit: string } | null = null;
 
   for (const rawLine of rawLines) {
     const topLevel = rawLine as RawTopLevel;
@@ -103,8 +144,17 @@ export function flattenLogRecords(rawLines: unknown[]): FlattenResult {
 
           const rawName = asString(attributes["event.name"]);
           const name = EVENT_NAME_ALIASES[rawName] ?? rawName;
+
+          if (!gitStatusRepositoryState && rawName === "api_request_body") {
+            const bodyText = attributes["body"];
+            if (typeof bodyText === "string") {
+              gitStatusRepositoryState = extractGitStatusRepositoryState(bodyText);
+            }
+          }
+
           if (!KNOWN_EVENT_NAMES.has(rawName)) {
             unrecognizedEventCount += 1;
+            unrecognizedEventTimestamps.push(timestampFromNano(logRecord.timeUnixNano));
             continue;
           }
           const sequenceRaw = attributes["event.sequence"];
@@ -120,6 +170,15 @@ export function flattenLogRecords(rawLines: unknown[]): FlattenResult {
     }
   }
 
+  // Fall back to the text-parsed gitStatus block only when no vcs.branch/
+  // vcs.commit attribute was ever present (real telemetry never carries
+  // those attributes at all; synthetic fixtures that do carry them keep
+  // taking priority).
+  if (repositoryState.branch === null && gitStatusRepositoryState) {
+    repositoryState.branch = gitStatusRepositoryState.branch;
+    repositoryState.headCommit = gitStatusRepositoryState.headCommit;
+  }
+
   return {
     sessionIdentifier,
     buildVersion,
@@ -127,5 +186,6 @@ export function flattenLogRecords(rawLines: unknown[]): FlattenResult {
     startingRepositoryState: repositoryState,
     records,
     unrecognizedEventCount,
+    unrecognizedEventTimestamps,
   };
 }

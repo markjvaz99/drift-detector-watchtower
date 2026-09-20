@@ -287,18 +287,20 @@ write(
         attr("cache_creation_tokens", 500),
         attr("cost_usd", 0.02),
       ], 1000),
+      // Large gap simulating the human taking a long time to approve — this
+      // is the gap ENDING at the tool_decision (its timestamp is logged when
+      // the decision is actually made), not the gap after it.
       record("tool_decision", 3, [
         attr("tool_use_id", "tu_wait"),
         attr("tool_name", "Bash_test"),
         attr("decision", "approved"),
         attr("decision_source", "user_temporary"),
-      ], 1000),
-      // Large gap simulating the human taking a long time to approve.
+      ], 600_000),
       record("tool_result", 4, [
         attr("tool_use_id", "tu_wait"),
         attr("tool_name", "Bash_test"),
         attr("outcome", "success"),
-      ], 600_000),
+      ], 1000),
     ]),
   ]),
 );
@@ -495,6 +497,22 @@ write(
       ...realToolPair(REAL_SESSION_ID, 11, "tu_real_rejected", "Bash", {
         decision: "reject",
         source: "user_reject",
+      }),
+      // Real telemetry sometimes encodes tool_result.success as the STRING
+      // "false" rather than a boolean — this call must still count as a failure.
+      ...realToolPair(REAL_SESSION_ID, 13, "tu_real_failed", "Bash", {
+        success: "false",
+      }),
+      // Real telemetry truncates large tool_input fields with a "…[N chars]"
+      // suffix (Unicode ellipsis) stating how many more characters were cut —
+      // true length is the visible prefix plus N, not the visible length alone.
+      ...realToolPair(REAL_SESSION_ID, 15, "tu_real_truncated", "Edit", {
+        toolInput: {
+          file_path: "/repo/big.py",
+          old_string: "pass",
+          // 120 visible chars + a marker stating 4880 more were cut -> true length 5000.
+          new_string: "x".repeat(120) + "…[4880 chars]",
+        },
       }),
     ]),
   ]),

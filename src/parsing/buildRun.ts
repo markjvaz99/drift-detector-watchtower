@@ -31,6 +31,7 @@ export function buildRunFromText(fileName: string, text: string): BuiltRun {
     startingRepositoryState: flattened.startingRepositoryState,
     events,
     unrecognizedEventCount: flattened.unrecognizedEventCount,
+    unrecognizedEventTimestamps: flattened.unrecognizedEventTimestamps,
   };
 
   const promptEvents = events.filter((event) => event.type === "user_prompt");

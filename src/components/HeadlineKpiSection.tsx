@@ -1,7 +1,34 @@
-import type { Comparison, Run } from "../types";
+import type { CSSProperties } from "react";
+import type { Comparison, DriftSeverity, Run } from "../types";
 import { identifyOutliers } from "../drift/identifyOutliers";
-import { SignalBadge } from "./SignalBadge";
 import { runColor } from "../ui/runColors";
+
+const SEVERITY_ACCENT_VAR: Record<DriftSeverity, string> = {
+  "no-drift": "var(--signal-neutral)",
+  moderate: "var(--signal-moderate)",
+  large: "var(--signal-large)",
+  categorical: "var(--signal-categorical)",
+  "cannot-determine": "var(--signal-neutral)",
+  uninterpretable: "var(--signal-neutral)",
+};
+
+const SEVERITY_BADGE_CLASS: Record<DriftSeverity, string> = {
+  "no-drift": "signal-badge--neutral",
+  moderate: "signal-badge--moderate",
+  large: "signal-badge--large",
+  categorical: "signal-badge--categorical",
+  "cannot-determine": "signal-badge--neutral",
+  uninterpretable: "signal-badge--neutral",
+};
+
+const SEVERITY_LABEL: Record<DriftSeverity, string> = {
+  "no-drift": "No drift",
+  moderate: "moderate",
+  large: "large drift",
+  categorical: "categorical",
+  "cannot-determine": "cannot determine",
+  uninterpretable: "uninterpretable",
+};
 
 export interface HeadlineKpiSectionProps {
   comparison: Comparison;
@@ -55,7 +82,15 @@ export function HeadlineKpiSection({ comparison, runs, onViewFullTable }: Headli
           const delta = isTwoRunNumeric ? percentDelta(valueA as number, valueB as number) : null;
 
           return (
-            <li key={key} className="headline-kpi-card card">
+            <li
+              key={key}
+              className="headline-kpi-card card"
+              style={
+                classification
+                  ? ({ "--kpi-accent": SEVERITY_ACCENT_VAR[classification.severity] } as CSSProperties)
+                  : undefined
+              }
+            >
               <h3 className="kpi-label">{metric?.label ?? key}</h3>
               {isTwoRunNumeric ? (
                 <p className="kpi-values">
@@ -77,10 +112,13 @@ export function HeadlineKpiSection({ comparison, runs, onViewFullTable }: Headli
                   </p>
                 )
               )}
-              <p className="kpi-signal-row">
-                {delta && <span className="kpi-delta">{delta}</span>}
-                {classification && <SignalBadge severity={classification.severity} />}
-              </p>
+              {classification && (
+                <p className="kpi-signal-row">
+                  <span className={`signal-badge signal-badge--kpi ${SEVERITY_BADGE_CLASS[classification.severity]}`}>
+                    {delta ? `${delta} · ${SEVERITY_LABEL[classification.severity]}` : SEVERITY_LABEL[classification.severity]}
+                  </span>
+                </p>
+              )}
             </li>
           );
         })}

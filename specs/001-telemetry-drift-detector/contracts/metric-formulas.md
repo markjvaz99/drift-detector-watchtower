@@ -8,7 +8,7 @@ Every metric implemented in `src/metrics/` MUST match one of the definitions bel
 |---|---|---|
 | Turns | Count of main-task API calls (post FR-4 exclusion) | — |
 | Input / output / cache-read / cache-creation tokens | Direct sums from main-task API calls | — |
-| Tokens per turn | `total tokens (incl. cache) / turns` | Turns |
+| Tokens per turn | `(input + output) / turns` — deliberately excludes cache-read/creation tokens, which are already tracked by their own metrics (FR-17, FR-18) and would otherwise swamp this signal with caching-architecture noise rather than actual per-turn work | Turns |
 | Total tokens including cache | `input + output + cache-read + cache-creation` | — |
 | Cost | Direct sum from main-task API calls | — |
 | Tool calls | Count of executed tool calls (excludes rejections per FR-6) | — |
@@ -18,10 +18,10 @@ Every metric implemented in `src/metrics/` MUST match one of the definitions bel
 
 | Component | Formula |
 |---|---|
-| Total wall-clock duration | `last event timestamp − first event timestamp` (within the run) |
-| Approval-wait time | Sum of intervals where a `tool_decision` has `source` indicating human approval (e.g., `user_temporary`, `user_reject`) between decision request and resolution |
-| Other idle time | Sum of gaps between consecutive events exceeding a defined idle threshold, excluding approval-wait intervals |
-| Active time | `total duration − approval-wait time − other idle time` |
+| Total wall-clock duration | `last event timestamp − first event timestamp`, among main-task events only (excludes the same non-task `query_source` calls as FR-4 — a trailing session-title/away-summary call must not inflate the measured span) |
+| Approval-wait time | Sum of gaps ENDING at a `tool_decision` whose `source` indicates human approval (e.g., `user_temporary`, `user_reject`) — the decision's own timestamp is logged when the human actually decides, so the wait precedes it, not follows it. A large gap that spans an unrecognized event (e.g. a housekeeping marker) is split at that point, so only the portion actually ending at the human decision counts |
+| Active time | Direct sum of the `duration_ms` attribute carried by every `tool_result` and `api_call` (aliased from real telemetry's `api_request`) event — each event records how long that individual call actually took, so this is an additive, non-overlapping total (calls are sequential within a session), not a gap inference. Includes non-task calls (e.g. away-summary generation), since they still represent real processing time even though they're excluded from the total-duration span above |
+| Other idle time | `total duration − approval-wait time − active time` (the residual: everything not directly attributed to a human decision or a recorded event duration). Gap-based inference undercounts real active time whenever multiple short operations pack into what looks like one small gap — event-level `duration_ms` is the ground truth the source telemetry itself records |
 
 Raw wall-clock duration MUST NOT be shown as a standalone "speed" comparison without this breakdown alongside it.
 

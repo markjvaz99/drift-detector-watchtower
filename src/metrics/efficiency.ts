@@ -45,7 +45,11 @@ export function computeEfficiencyMetrics(logFile: LogFile): RunMetricValue[] {
     {
       key: "tokens_per_turn",
       label: "Tokens per turn",
-      value: turns > 0 ? totalTokens / turns : "not-available",
+      // Deliberately excludes cache tokens: cache-read/creation volume is
+      // already tracked by its own metrics (FR-17, FR-18), and including it
+      // here would make "tokens per turn" swing on caching architecture
+      // rather than the actual input/output work done each turn.
+      value: turns > 0 ? (inputTokens + outputTokens) / turns : "not-available",
       denominatorLabel: `per turn (${turns})`,
     },
     { key: "total_tokens", label: "Total tokens (incl. cache)", value: totalTokens, denominatorLabel: "" },

@@ -1,4 +1,5 @@
 import type { RelatednessAssessment, Run } from "../types";
+import { Icon } from "./Icon";
 
 export interface RelatednessReminderBadgeProps {
   assessment: RelatednessAssessment | null;
@@ -12,6 +13,9 @@ export function RelatednessReminderBadge({ assessment, runsById }: RelatednessRe
 
   return (
     <div className="relatedness-reminder-badge card" role="note">
+      <p className="warning-heading" style={{ margin: 0 }}>
+        <Icon name="warning" size={13} /> Relatedness caveat
+      </p>
       {affectedPairs.map((pair) => (
         <p key={`${pair.runIdA}-${pair.runIdB}`} className="relatedness-reminder-line">
           {runsById.get(pair.runIdA)?.label ?? pair.runIdA} and{" "}

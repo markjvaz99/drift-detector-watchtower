@@ -26,7 +26,9 @@ describe("efficiency metric formulas", () => {
     const totalTokens = metricValue(metrics, "total_tokens") as number;
     expect(totalTokens).toBe(1200 + 700 + 4400 + 2150);
 
-    expect(metricValue(metrics, "tokens_per_turn")).toBe(totalTokens / 3);
+    // Deliberately excludes cache tokens (see contracts/metric-formulas.md).
+    const inputOutputTokens = (500 + 400 + 300) + (300 + 250 + 150);
+    expect(metricValue(metrics, "tokens_per_turn")).toBe(inputOutputTokens / 3);
     expect(metricValue(metrics, "tool_calls")).toBe(3);
     expect(metricValue(metrics, "tool_calls_per_turn")).toBe(1);
   });

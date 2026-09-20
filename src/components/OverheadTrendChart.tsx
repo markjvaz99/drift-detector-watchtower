@@ -1,8 +1,38 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer } from "recharts";
 import type { LogFile, Run } from "../types";
 import { computeOverheadTrend, computeOverheadTrendMetrics } from "../metrics/overheadTrend";
 import { DistributionChart } from "./DistributionChart";
 import { runColor } from "../ui/runColors";
+
+function quartileTick(bucketIndex: number): string {
+  return `Q${bucketIndex + 1}`;
+}
+
+interface EndpointDotProps {
+  cx?: number;
+  cy?: number;
+  index?: number;
+  value?: number;
+  pointCount: number;
+  color: string;
+}
+
+// Only the last (most recent) point on each line gets a visible dot + its
+// value printed beside it — earlier points stay bare so the chart doesn't
+// get noisy, but the reader can read off the ending value at a glance.
+function EndpointDot({ cx, cy, index, value, pointCount, color }: EndpointDotProps) {
+  if (cx === undefined || cy === undefined || index !== pointCount - 1) {
+    return <circle cx={cx} cy={cy} r={0} fill="none" />;
+  }
+  return (
+    <g>
+      <circle cx={cx} cy={cy} r={3.5} fill={color} stroke="var(--surface-1)" strokeWidth={1.5} />
+      <text x={cx + 8} y={cy + 4} fontSize={11} fill={color} fontFamily="var(--font-mono)">
+        {typeof value === "number" ? value.toFixed(0) : ""}
+      </text>
+    </g>
+  );
+}
 
 export interface OverheadTrendChartProps {
   runs: Run[];
@@ -60,22 +90,42 @@ export function OverheadTrendChart({ runs, logFilesById }: OverheadTrendChartPro
     <div className="overhead-trend-chart card" data-layout="lines">
       <p className="chart-card-title">Overhead ratio across the session</p>
       <p className="chart-card-subtitle">cache_read ÷ output_tokens, by session quartile</p>
-      <LineChart width={460} height={220} data={data}>
-        <CartesianGrid stroke="var(--border-subtle)" vertical={false} />
-        <XAxis dataKey="bucketIndex" stroke="var(--text-muted)" tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
-        <YAxis stroke="var(--text-muted)" tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
-        <Tooltip contentStyle={{ background: "var(--bg-elevated)", border: "1px solid var(--card-border)", fontSize: 12 }} />
-        {runs.map((run, index) => (
-          <Line
-            key={run.id}
-            dataKey={run.label}
-            dot={false}
-            stroke={runColor(index)}
-            strokeWidth={2}
-            strokeOpacity={shouldFade && !highlightedRunIds.has(run.id) ? 0.25 : 1}
-          />
-        ))}
-      </LineChart>
+      <div className="overhead-trend-plot">
+        <ResponsiveContainer width="100%" height="100%" minWidth={200} minHeight={180}>
+          <LineChart data={data} margin={{ top: 6, right: 34, left: 0, bottom: 0 }}>
+            <CartesianGrid stroke="var(--border)" vertical={false} />
+            <XAxis
+              dataKey="bucketIndex"
+              tickFormatter={quartileTick}
+              stroke="var(--border-strong)"
+              tick={{ fill: "var(--text-muted)", fontSize: 11 }}
+            />
+            <YAxis stroke="var(--border-strong)" tick={{ fill: "var(--text-muted)", fontSize: 11 }} width={36} />
+            <Tooltip
+              labelFormatter={(v) => quartileTick(Number(v))}
+              contentStyle={{
+                background: "var(--surface-2)",
+                border: "1px solid var(--border-strong)",
+                borderRadius: "var(--radius-sm)",
+                fontSize: 12,
+              }}
+            />
+            {runs.map((run, index) => (
+              <Line
+                key={run.id}
+                dataKey={run.label}
+                dot={(dotProps: EndpointDotProps) => (
+                  <EndpointDot key={dotProps.index} {...dotProps} pointCount={data.length} color={runColor(index)} />
+                )}
+                activeDot={{ r: 4 }}
+                stroke={runColor(index)}
+                strokeWidth={2}
+                strokeOpacity={shouldFade && !highlightedRunIds.has(run.id) ? 0.25 : 1}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
       <p className="chart-card-footnote">
         {runs.map((run, index) => (
           <span key={run.id} style={{ color: runColor(index) }}>

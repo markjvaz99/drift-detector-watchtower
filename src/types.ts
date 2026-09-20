@@ -23,6 +23,13 @@ export interface LogFile {
   startingRepositoryState: RepositoryState;
   events: OrderedEvent[];
   unrecognizedEventCount: number;
+  /**
+   * Timestamps of unrecognized events, kept only as gap-split boundaries for
+   * duration analysis (FR-16) — see FlattenResult's field of the same name.
+   * Optional so existing LogFile literals (tests, imported reports) don't
+   * need updating; absent means "no boundary refinement available."
+   */
+  unrecognizedEventTimestamps?: string[];
 }
 
 export type DataQualityNoteType = "resent-prompt" | "aborted-session" | "schema-mismatch";
@@ -143,6 +150,8 @@ export interface DominantDriverFinding {
   explanation: string;
   supportingEvidence: EvidenceReference[];
   supportingNumbers: number[];
+  /** Presentational labels for supportingNumbers, same order/length — describes what each number is (e.g. "Outlier value", "Group median"), not a new computed value. */
+  supportingNumberLabels: string[];
 }
 
 export interface SessionSummary {

@@ -19,11 +19,16 @@ function normalizeDecision(raw: string): ToolDecision {
 }
 
 function resolveOutcome(resultEvent: OrderedEvent): ToolResultOutcome {
-  // Real telemetry carries a boolean "success" on tool_result; synthetic
-  // fixtures carry a string "outcome" ("success"/"failure") instead.
+  // Real telemetry carries "success" on tool_result, but inconsistently —
+  // some records use a native boolean, others a stringified "true"/"false"
+  // (occasionally even both, as duplicate attributes on the same record).
+  // Synthetic fixtures carry a string "outcome" ("success"/"failure") instead.
   const success = resultEvent.attributes["success"];
   if (typeof success === "boolean") {
     return success ? "success" : "failure";
+  }
+  if (success === "true" || success === "false") {
+    return success === "true" ? "success" : "failure";
   }
   return asString(resultEvent.attributes["outcome"], "success") as ToolResultOutcome;
 }

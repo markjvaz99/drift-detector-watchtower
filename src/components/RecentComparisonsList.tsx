@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { RecentComparisonEntry } from "../types";
 import { listRecentComparisons } from "../state/localHistoryStore";
+import { Icon } from "./Icon";
 
 export interface RecentComparisonsListProps {
   onOpen: (id: string) => void;
@@ -23,7 +24,9 @@ export function RecentComparisonsList({ onOpen }: RecentComparisonsListProps) {
 
   return (
     <section className="recent-comparisons-list" aria-label="Recent comparisons">
-      <h2>Recent comparisons</h2>
+      <h2>
+        <Icon name="history" size={12} /> Recent comparisons
+      </h2>
       <ul>
         {entries.map((entry) => (
           <li key={entry.id}>

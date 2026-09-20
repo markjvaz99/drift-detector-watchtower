@@ -10,8 +10,17 @@ export function compareRepositoryState(
   a: RepositoryState,
   b: RepositoryState,
 ): RepositoryStateComparisonResult {
-  const sameBranch = a.branch !== null && a.branch === b.branch;
-  const sameCommit = a.headCommit !== null && a.headCommit === b.headCommit;
+  const bothKnown = a.branch !== null && b.branch !== null && a.headCommit !== null && b.headCommit !== null;
+
+  if (!bothKnown) {
+    // Genuinely unknown (e.g. no gitStatus block could be parsed) is a
+    // distinct state from "different" — it must not be reported as a repo
+    // mismatch when we simply couldn't determine one or both runs' state.
+    return { sameBranch: false, sameCommit: false, description: "starting repository state unknown for one or both runs" };
+  }
+
+  const sameBranch = a.branch === b.branch;
+  const sameCommit = a.headCommit === b.headCommit;
 
   let description: string;
   if (sameBranch && sameCommit) {

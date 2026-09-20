@@ -74,14 +74,14 @@ test.describe("Quickstart scenario 3 — two-run drift comparison", () => {
     await expect(page.getByRole("region", { name: /evidence/i })).toBeVisible();
   });
 
-  test("shows a resent-prompt data-quality note with estimated impact", async ({ page }) => {
+  test("flags resent-prompt-affected metrics as an uninterpretable confound in the comparison table", async ({ page }) => {
     await page.goto("/");
     await page.locator("#log-upload").setInputFiles([
       join(FIXTURES, "resent-prompt.jsonl"),
       join(FIXTURES, "single-run-normal.jsonl"),
     ]);
     await page.getByRole("button", { name: /continue to comparison/i }).click();
-    await expect(page.getByText(/estimated cost impact/i)).toBeVisible();
+    await expect(page.getByText(/resent-prompt/i).first()).toBeVisible();
   });
 });
 

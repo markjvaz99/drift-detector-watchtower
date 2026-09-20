@@ -8,6 +8,9 @@ import { SingleRunView } from "../../src/pages/SingleRunView";
 
 const FIXTURES = join(__dirname, "../fixtures");
 
+// Per user decision, the comparison page intentionally does not render this
+// notice (or the resent-prompt/rejected-call notices) — it stays on the
+// single-run view only.
 describe("unrecognized-event surfacing (contracts/input-log-schema.md)", () => {
   it("SingleRunView reports unrecognized events as 'unrecognized, not included in metrics'", () => {
     const { logFile, run } = loadFixtureRun(join(FIXTURES, "unknown-schema-fields.jsonl"), "Run 1");
@@ -17,7 +20,7 @@ describe("unrecognized-event surfacing (contracts/input-log-schema.md)", () => {
     expect(screen.getByText(/unrecognized, not included in metrics/i)).toBeInTheDocument();
   });
 
-  it("ComparisonView reports unrecognized events for the affected run without corrupting the rest of parsing", () => {
+  it("ComparisonView still parses and renders the rest of the comparison for the affected run without corrupting parsing, even though it no longer surfaces the notice itself", () => {
     const unknown = loadFixtureRun(join(FIXTURES, "unknown-schema-fields.jsonl"), "Run 1");
     const normal = loadFixtureRun(join(FIXTURES, "single-run-normal.jsonl"), "Run 2");
     const logFilesById = new Map([
@@ -37,7 +40,6 @@ describe("unrecognized-event surfacing (contracts/input-log-schema.md)", () => {
       />,
     );
 
-    expect(screen.getByText(/unrecognized, not included in metrics/i)).toBeInTheDocument();
     expect(screen.getAllByText("Read calls").length).toBeGreaterThan(0);
   });
 

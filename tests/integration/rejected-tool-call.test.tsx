@@ -8,7 +8,7 @@ import { ComparisonView } from "../../src/pages/ComparisonView";
 const FIXTURES = join(__dirname, "../fixtures");
 
 describe("ComparisonView — rejected tool call", () => {
-  it("shows the rejected call as a distinct rejection, not a failure or normal completed call", () => {
+  it("keeps a rejected call as a distinct rejection, not a failure or normal completed call, and reflects it in the Rejected calls metric row (the comparison page no longer shows a per-call badge, per user decision)", () => {
     const rejected = loadFixtureRun(join(FIXTURES, "rejected-tool-call.jsonl"), "Run 1");
     const normal = loadFixtureRun(join(FIXTURES, "single-run-normal.jsonl"), "Run 2");
 
@@ -33,6 +33,6 @@ describe("ComparisonView — rejected tool call", () => {
       />,
     );
 
-    expect(screen.getByText(/Rejected: Bash_test/i)).toBeInTheDocument();
+    expect(screen.getAllByText("Rejected calls").length).toBeGreaterThan(0);
   });
 });

@@ -15,8 +15,15 @@ export function AppRoot() {
   const logFiles = useSessionStore((state) => state.logFiles);
   const runs = useSessionStore((state) => state.runs);
   const evidenceIndex = useSessionStore((state) => state.evidenceIndex);
+  const resetSession = useSessionStore((state) => state.reset);
   const [viewMode, setViewMode] = useState<ViewMode>("check");
   const [reopened, setReopened] = useState<{ comparison: Comparison; runs: Run[] } | null>(null);
+
+  const startNewComparison = () => {
+    resetSession();
+    setReopened(null);
+    setViewMode("check");
+  };
 
   const logFilesById = useMemo(() => new Map(logFiles.map((lf) => [lf.id, lf])), [logFiles]);
   const runsById = useMemo(() => new Map(runs.map((run) => [run.id, run])), [runs]);
@@ -34,6 +41,7 @@ export function AppRoot() {
         relatednessAssessment={reopened.comparison.relatednessAssessment}
         evidenceIndex={new EvidenceIndex()}
         precomputedComparison={reopened.comparison}
+        onNewComparison={startNewComparison}
       />
     );
   }
@@ -82,6 +90,7 @@ export function AppRoot() {
       logFilesById={logFilesById}
       relatednessAssessment={relatednessAssessment}
       evidenceIndex={evidenceIndex}
+      onNewComparison={startNewComparison}
     />
   );
 }

@@ -4,6 +4,7 @@ import { parseLogInWorker } from "../workers/parseLogInWorker";
 import type { BuiltRun } from "../parsing/buildRun";
 import { RecentComparisonsList } from "./RecentComparisonsList";
 import { importReport } from "../reporting/importReport";
+import { Icon } from "./Icon";
 import type { Comparison, Run } from "../types";
 
 export interface UploadPanelProps {
@@ -15,6 +16,7 @@ export function UploadPanel({ onOpenRecent, onImportReport }: UploadPanelProps =
   const addBuiltRuns = useSessionStore((state) => state.addBuiltRuns);
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragActive, setIsDragActive] = useState(false);
 
   async function handleImport(fileList: FileList | null) {
     const file = fileList?.[0];
@@ -52,10 +54,33 @@ export function UploadPanel({ onOpenRecent, onImportReport }: UploadPanelProps =
         </div>
       </header>
 
+      <div className="upload-hero">
+        <p className="upload-hero-title">Compare Claude Code sessions</p>
+        <p className="upload-hero-subtitle">
+          Upload OTLP telemetry logs to see what actually changed between runs — entirely on-device.
+        </p>
+      </div>
+
       <div className="card upload-card">
         <p className="card-title">Upload telemetry logs</p>
         <p className="card-subtitle">One or more .jsonl files — 2+ enables drift comparison.</p>
-        <label htmlFor="log-upload" className="file-input-label">
+        <label
+          htmlFor="log-upload"
+          className={`dropzone${isDragActive ? " dropzone--active" : ""}`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDragActive(true);
+          }}
+          onDragLeave={() => setIsDragActive(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDragActive(false);
+            void handleFiles(event.dataTransfer.files);
+          }}
+        >
+          <Icon name="upload" size={22} className="dropzone-icon" />
+          <span className="dropzone-title">Drag and drop .jsonl files here</span>
+          <span className="dropzone-subtitle">or click to browse</span>
           <input
             id="log-upload"
             type="file"
@@ -79,6 +104,7 @@ export function UploadPanel({ onOpenRecent, onImportReport }: UploadPanelProps =
         {onImportReport && (
           <div className="import-report">
             <label htmlFor="report-import" className="file-input-label file-input-label--secondary">
+              <Icon name="external" size={13} />
               Import a previously exported report
               <input id="report-import" type="file" accept=".json" onChange={(event) => void handleImport(event.target.files)} />
             </label>

@@ -34,6 +34,7 @@ export function composeExplanation(
       explanation: NO_DOMINANT_DRIVER_MESSAGE,
       supportingEvidence: [],
       supportingNumbers: [],
+      supportingNumberLabels: [],
     };
   }
 
@@ -45,6 +46,7 @@ export function composeExplanation(
       explanation: NO_DOMINANT_DRIVER_MESSAGE,
       supportingEvidence: [],
       supportingNumbers: [],
+      supportingNumberLabels: [],
     };
   }
 
@@ -67,15 +69,24 @@ export function composeExplanation(
   const supportingEvidence = logFile ? findEvidenceForMetric(logFile, metric.key) : [];
 
   const supportingNumbers: number[] = [];
-  if (typeof outlierValue === "number") supportingNumbers.push(outlierValue);
+  const supportingNumberLabels: string[] = [];
+  if (typeof outlierValue === "number") {
+    supportingNumbers.push(outlierValue);
+    supportingNumberLabels.push(`${outlierLabel} (${metric.label})`);
+  }
   if (stats) {
     supportingNumbers.push(stats.median);
-    if (outlierRunId) supportingNumbers.push(Math.abs(stats.deviationByRun.get(outlierRunId) ?? 0));
+    supportingNumberLabels.push("Group median");
+    if (outlierRunId) {
+      supportingNumbers.push(Math.abs(stats.deviationByRun.get(outlierRunId) ?? 0));
+      supportingNumberLabels.push("Deviation from median");
+    }
   } else {
     const presentInRunCount = Array.from(metric.valuesByRun.values()).filter(
       (v) => typeof v === "number" && v > 0,
     ).length;
     supportingNumbers.push(presentInRunCount, metric.valuesByRun.size);
+    supportingNumberLabels.push("Runs with this behavior", "Total runs compared");
   }
 
   return {
@@ -84,5 +95,6 @@ export function composeExplanation(
     explanation,
     supportingEvidence,
     supportingNumbers: supportingNumbers.slice(0, 3),
+    supportingNumberLabels: supportingNumberLabels.slice(0, 3),
   };
 }

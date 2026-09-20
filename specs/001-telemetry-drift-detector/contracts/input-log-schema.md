@@ -41,6 +41,15 @@ Each `logRecords[]` entry has attributes wrapped in a typed-value envelope, whic
 | event type | `user_prompt` | FR-7a — the actual task prompt text used by the relatedness check |
 | embedded content | git-status system reminder | FR-7b — source of `RepositoryState` (branch, head commit, working directory) |
 
+### Git-status text parsing (FR-7b)
+
+- Real Claude Code telemetry carries no `vcs.branch`/`vcs.commit` resource attributes at all. The starting repository state instead appears as plain text — a `# gitStatus` system-reminder block — inside the first `api_request_body` event's `body` field (`Current branch: X`, and the first hash under `Recent commits:`).
+- That `body` field is itself a JSON-encoded request payload, so its embedded newlines appear as the literal two-character sequence `\n` rather than real newline bytes; the parser normalizes that before matching the block's lines.
+- Only the FIRST `api_request_body` event's gitStatus block is used as the starting state — a later one mid-session may reflect commits the agent itself made, not the state the runs should be compared against.
+- Synthetic fixtures that DO set `vcs.branch`/`vcs.commit` resource attributes keep priority over this text-parsed fallback.
+- If no `vcs.branch`/`vcs.commit` attribute and no parseable gitStatus block are present, `RepositoryState.branch`/`headCommit` MUST remain `null` — this is a distinct "unknown/unverifiable" state, never conflated with "different repository" by downstream relatedness comparison (`contracts/metric-formulas.md` and `src/relatedness/repositoryStateComparison.ts`).
+- Working-directory differences between two runs are surfaced as separate informational metadata and MUST NOT by themselves downgrade relatedness confidence when branch/commit match — comparing the same repo/commit checked out into two different working directories is the expected A/B setup, not a mismatch.
+
 ## Tool-call pairing (FR-6)
 
 - Every `tool_decision` MUST be paired to its `tool_result` by `tool_use_id`.
@@ -50,6 +59,9 @@ Each `logRecords[]` entry has attributes wrapped in a typed-value envelope, whic
 
 - Large field values (e.g., edit/file-creation content) may appear truncated by the source telemetry with a truncation marker pattern.
 - The parser MUST detect this marker pattern and reconstruct the true original length for code-volume metrics rather than counting the truncated (shorter) string length.
+- Two marker formats are recognized:
+  - `...[truncated: original length (N)]` — states the total original length directly (N is the true length).
+  - `…[N chars]` (a Unicode ellipsis) — confirmed against real Claude Code telemetry; states how many *additional* characters were cut beyond what's visible, so the true length is `(visible text before the marker).length + N`.
 
 ## Multiple task prompts per session (FR-5)
 
@@ -60,6 +72,7 @@ Each `logRecords[]` entry has attributes wrapped in a typed-value envelope, whic
 
 - Event types, `query_source` values, or attributes not recognized by this contract's current version MUST NOT abort or corrupt parsing of the rest of the file.
 - Each unrecognized event MUST be counted in `LogFile.unrecognizedEventCount` and surfaced in the UI as "unrecognized, not included in metrics" — never silently dropped and never miscounted into an existing category.
+- Unrecognized events' timestamps MAY still be used as gap-split boundaries for duration analysis (`contracts/metric-formulas.md`'s FR-16 breakdown) — this doesn't "recognize" the event as a task action or include it in any metric, it only refines which portion of an otherwise-single large gap is idle vs. approval-wait.
 
 ## Non-transmission constraint (FR-30)
 

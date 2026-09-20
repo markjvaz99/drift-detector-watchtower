@@ -6,6 +6,7 @@ import { identifyOutliers } from "../drift/identifyOutliers";
 import { EvidenceDrilldownPanel } from "./EvidenceDrilldownPanel";
 import { PinMetricToggle } from "./PinMetricToggle";
 import { SignalBadge } from "./SignalBadge";
+import { Icon } from "./Icon";
 import { runColor } from "../ui/runColors";
 
 export interface ComparisonTableProps {
@@ -49,10 +50,10 @@ export function ComparisonTable({
               {run.label}
             </th>
           ))}
-          <th>Min</th>
-          <th>Median</th>
-          <th>Max</th>
-          <th>Spread</th>
+          <th className="num">Min</th>
+          <th className="num">Median</th>
+          <th className="num">Max</th>
+          <th className="num">Spread</th>
           <th>Outlier</th>
           <th>Signal</th>
           {showPinColumn && <th>Pin</th>}
@@ -77,11 +78,15 @@ export function ComparisonTable({
                     {metric.label}
                   </button>
                 </td>
-                {runs.map((run) => {
+                {runs.map((run, index) => {
                   const value = metric.valuesByRun.get(run.id);
                   const unavailable = value === "not-available" || value === undefined;
                   return (
-                    <td key={run.id} className={unavailable ? "cell-unavailable" : undefined}>
+                    <td
+                      key={run.id}
+                      className={unavailable ? "cell-unavailable num" : "num"}
+                      style={unavailable ? undefined : { color: runColor(index) }}
+                    >
                       {unavailable
                         ? "not available for this run"
                         : typeof value === "number"
@@ -90,10 +95,10 @@ export function ComparisonTable({
                     </td>
                   );
                 })}
-                <td>{stats ? formatNumber(stats.min) : "—"}</td>
-                <td>{stats ? formatNumber(stats.median) : "—"}</td>
-                <td>{stats ? formatNumber(stats.max) : "—"}</td>
-                <td>{stats ? formatNumber(stats.spread) : "—"}</td>
+                <td className="num">{stats ? formatNumber(stats.min) : "—"}</td>
+                <td className="num">{stats ? formatNumber(stats.median) : "—"}</td>
+                <td className="num">{stats ? formatNumber(stats.max) : "—"}</td>
+                <td className="num">{stats ? formatNumber(stats.spread) : "—"}</td>
                 <td>
                   {outliers.length > 0
                     ? outliers
@@ -109,8 +114,8 @@ export function ComparisonTable({
                       role="note"
                       title={classification.overriddenByConfound.description}
                     >
-                      {" "}
-                      ⚠ {classification.overriddenByConfound.type}
+                      <Icon name="warning" size={11} />
+                      {classification.overriddenByConfound.type}
                     </span>
                   )}
                 </td>
