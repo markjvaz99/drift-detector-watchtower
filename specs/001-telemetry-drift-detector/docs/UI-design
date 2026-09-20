@@ -1,0 +1,245 @@
+# Drift Dashboard — UI Design Document v2 (updated for N-run + relatedness requirements)
+
+Companion to `telemetry-drift-detector-spec-input.md`. Same editable format as the first breakdown: each component has what it shows, what it means, current spec, and a blank `> Your notes:` line. Every section is tagged **[NEW]**, **[UPDATED]**, or **[UNCHANGED]** against the v1 design so you can see exactly what moved.
+
+This version designs for the **general N-run case** (1 to many logs), not just the fixed two-run layout from v1. Where behavior differs by how many runs are loaded, both states are described.
+
+---
+
+## 0. Global design tokens **[UPDATED]**
+
+Same base palette as v1, plus a run-color system that scales past two runs.
+
+| Token | Value | Used for |
+|---|---|---|
+| Background | `#0C0E12` | Page background |
+| Surface / Surface-alt / Border | `#14171C` / `#1B1F26` / `#262A31` | Cards, tracks, rules |
+| Text primary / secondary / faint | `#EDEEF0` / `#9AA0AA` / `#6B7280` | Headings / labels / micro-text |
+| Signal — danger / warning / neutral | `#F0555F` / `#F2C94A` / `#9AA0AA` | Drift-severity chips (unchanged meaning, see §6) |
+| Display / Body / Data fonts | Space Grotesk / IBM Plex Sans / IBM Plex Mono | unchanged |
+
+**[NEW] Run color palette** — v1 hardcoded exactly two colors (amber = Detailed, teal = Generic). That only works for exactly two runs. Replace with an ordered palette assigned to runs in upload order:
+
+| Run position | Color | Hex |
+|---|---|---|
+| 1st | Amber | `#F2994A` |
+| 2nd | Teal | `#5EC8D8` |
+| 3rd | Violet | `#B79CF2` |
+| 4th | Green | `#7FD99A` |
+| 5th | Pink | `#F28FB0` |
+| 6th+ | Repeat with reduced opacity (70%), or switch to distribution mode — see 7.6 | — |
+
+> **Your notes:**
+
+---
+
+## 1. Screen flow **[NEW]**
+
+v1 was a 2-screen flow (Upload → Dashboard). Adding the relatedness check inserts a step that only appears when it's needed.
+
+```
+Upload  →  [2+ files uploaded?]  →  Relatedness Check  →  Dashboard
+   |                                        |
+   |—— 1 file only ————————————————————————————→  Single-run view (no diff language)
+```
+
+- 1 file uploaded: skip straight to a single-run view (§9).
+- 2+ files uploaded: always pass through the Relatedness Check screen before the comparison dashboard — even if confidence is high, so the user sees *why* the system considers them comparable, not just the resulting numbers.
+
+> **Your notes:**
+
+---
+
+## 2. Upload screen **[UPDATED — copy only]**
+
+Same layout as v1 (drop zone, browse button, recent comparisons list). One content change:
+
+| # | Change |
+|---|---|
+| 2.1 | Copy changes from "Upload up to two `.jsonl` files" → **"Upload one or more `.jsonl` files — 2+ enables drift comparison."** No hard cap on file count. |
+| 2.2 | Drop-zone file-type chips gain a fourth chip: **"N files supported"** replacing the old **"up to 2 files"** chip. |
+
+> **Your notes:**
+
+---
+
+## 3. Relatedness check screen **[NEW]**
+
+**What it shows:** Appears after upload when 2+ files are loaded, before the dashboard. One row per pair (or per cluster, for larger N) of runs, each with a confidence badge and the plain-language reasoning behind it.
+
+**What it means:** This is the automated version of the manual check done by hand in the earlier analysis — reading each run's actual prompt text and starting git state to judge whether they're really the same task before trusting any comparison built on top of them. It's advisory, not a hard gate: the user can always proceed to view logs individually even if they're flagged unrelated (see open question in the spec doc — this default can change).
+
+| # | Component | Detail |
+|---|---|---|
+| 3.1 | Heading | "Checking task relatedness across 4 runs" (count is dynamic) |
+| 3.2 | Per-pair/cluster row | Run names + a confidence badge: **Related** (green dot), **Review recommended** (yellow dot), **Unrelated** (red dot) |
+| 3.3 | Reasoning line under each row | Plain text, e.g. *"Both prompts describe implementing a monthly-budget feature on the same repository (same branch, same base commit)."* or *"Prompt A describes a budgeting feature; Prompt C describes an authentication refactor — these do not appear to be the same task."* |
+| 3.4 | Partial-confidence case | *"Same repository, but Run B started from a different commit than Runs A/C/D — review before trusting this comparison."* (yellow) |
+| 3.5 | Primary action | **"Continue to comparison"** — enabled regardless of result |
+| 3.6 | Secondary action (only shown if any row is Unrelated or Review) | **"View runs individually instead"** — skips the head-to-head dashboard and opens N single-run views |
+
+> **Your notes:**
+
+---
+
+## 4. Dashboard top bar **[UNCHANGED, one label update]**
+
+Same as v1 (brand mark, breadcrumb, "New comparison" / "Export report" buttons).
+
+| # | Change |
+|---|---|
+| 4.1 | Breadcrumb becomes dynamic: "/ 4-run comparison — Monthly Budget" instead of a fixed "Monthly Budget comparison", so it's legible at any N. |
+
+> **Your notes:**
+
+---
+
+## 5. Run identity section **[UPDATED — layout + inline confound badges]**
+
+**What it shows:** One card per uploaded run (was a fixed 2-column grid in v1; now wraps to fit N).
+
+**What it means:** Same purpose as v1 — confirm what you're comparing before trusting the numbers — but two changes: the grid is no longer hardcoded to 2 columns, and anything that used to live in the old fixed "2 data validity notes" banner (§ removed, see Section 8 below) now attaches directly to the specific run card it's about.
+
+| # | Field | Detail |
+|---|---|---|
+| 5.1 | Grid layout | `repeat(auto-fit, minmax(320px, 1fr))` behavior — 2 runs = 2 columns (as in v1), 4 runs = 2×2 or 4×1 depending on width, 8+ runs = wraps to multiple rows. Top border color = that run's palette color from §0. |
+| 5.2 | Card fields (unchanged from v1) | Session ID, prompt length, working dir, turns, tool calls |
+| 5.3 | **[NEW] Inline confound badge** | A small warning icon in the card's top-right corner, shown *only* if this specific run has a flagged data-quality issue (e.g., resent prompt, rejected tool call). Click/tap reveals the note inline (expands under the card fields) — nothing is shown if the run has no issues. This is what replaces the fixed banner from v1. |
+
+> **Your notes:**
+
+---
+
+## 6. Dynamic KPI section **[UPDATED — was fixed 4 cards, now variable 0–N]**
+
+**What it shows:** Headline cards, but now generated from what actually drifted rather than a fixed set of four.
+
+**What it means:** Every computed metric gets a drift-severity classification first (no drift / moderate / large / categorical / cannot-determine / uninterpretable). Only metrics above "no drift" become KPI cards here, ranked by how large the drift is. This section can be empty, small, or larger depending on the comparison — it is not a fixed 4-up grid anymore.
+
+| # | State | Behavior |
+|---|---|---|
+| 6.1 | Metrics with drift found (typical case) | One card per qualifying metric, ranked highest-drift-first, same card anatomy as v1 (value(s), verdict chip) but value display adapts to N: 2 runs show "A vs B" as in v1; 3+ runs show the group range plus the outlier run's value, e.g. **"4,920 – 12,044 (Run 3 highest)"**. |
+| 6.2 | Cap on visible cards | Show at most 6 by default; if more than 6 metrics qualify, show the top 6 and a **"+3 more drifted metrics — view full table"** link rather than growing the row indefinitely. |
+| 6.3 | **[NEW] Empty state** | If zero metrics clear the drift threshold across all loaded runs: replace the entire KPI row with a single centered message: *"No metric shows meaningful drift across these N runs."* — not an empty grid, not hidden entirely (its absence would look like a loading bug). |
+| 6.4 | Per-card content, unchanged from v1 | Label, value(s), verdict chip using the same signal colors as §0 |
+
+> **Your notes:**
+
+---
+
+## 7. Charts **[UPDATED — multi-run rendering + large-N fallback]**
+
+Same four charts as v1, each needing to support more than two series.
+
+### 7.1 Cache-creation intensity (grouped bars)
+- 2–4 runs: same paired/grouped horizontal bars as v1, one bar per run per row, colored per §0's palette.
+- 5+ runs: switch to a **strip plot** per row instead (one dot per run along a single horizontal scale, so the row height doesn't grow linearly with run count) — see 7.6 for the general threshold rule.
+
+### 7.2 Overhead-ratio trend (line chart)
+- One line per run instead of a fixed two; legend below lists every run's growth multiple (e.g. "Run 1 — 10.4x", "Run 2 — 7.4x", "Run 3 — 6.1x"), sorted steepest-first.
+- Beyond ~6 runs, fade non-outlier lines to 30% opacity and keep the highest/lowest growth lines at full opacity, so the chart stays readable — outliers are what matters most here.
+
+### 7.3 Tool usage by type
+- Same per-tool-name row layout as v1, bar count per row scales with N runs the same way as 7.1.
+- The v1 behavior of flagging a categorically-different row (a tool used by only one run, like `mcp_tool`) generalizes to: flag any row where at least one run has zero and at least one run has a non-zero count.
+
+### 7.4 Where the wall-clock time went
+- Same three-bars-per-run (Active / Permission-wait / Other idle) as v1, one group per run — stacks vertically as N grows rather than assuming exactly two groups.
+
+### 7.5 **[NEW] Aggregate/distribution view toggle**
+When N is large enough that per-run color coding stops being legible, each chart above gets a small toggle: **"Per-run" / "Distribution"**. Distribution mode replaces individual bars/lines with a box-and-whisker or strip plot per metric (median line, interquartile range, outlier points labeled with their run). *(The exact N threshold for defaulting to Distribution mode is an open question — see the spec doc's Open Questions. Suggested starting default: 6.)*
+
+### 7.6 General rule this section encodes
+> Any chart with per-run series must define what happens as N grows — this document sets a soft default of switching emphasis (not necessarily hiding data) somewhere around 5–6 runs; the exact number is intentionally left as a tunable, not hardcoded here.
+
+> **Your notes:**
+
+---
+
+## 8. Data-validity notes banner — **[REMOVED]**
+
+v1 had a fixed, always-present banner: "⚠ 2 data-validity notes" with a hardcoded list. Per your requirement, **this fixed section no longer exists as a standing component.**
+
+What replaced it:
+- Confound findings about a *specific run* → inline badge on that run's identity card (§5.3).
+- Confound findings about a *specific metric* (e.g., "duration is uninterpretable because of permission-wait time") → inline badge directly on that metric's row/card wherever it appears (KPI card, chart, or table row), not collected elsewhere.
+- Net effect: if nothing needs flagging, **no validity-related UI appears anywhere** on the dashboard — its presence is entirely conditional per finding, not a guaranteed block of screen space.
+
+> **Your notes:**
+
+---
+
+## 9. Top driver panel **[UPDATED — was a hardcoded "Root cause" narrative, now generated]**
+
+**What it shows:** Same visual treatment as v1's "Root cause" card (label, heading, paragraph, mini-stats row) — but the content is no longer specific to the browser-automation finding from one particular comparison. It's generated per-comparison from whichever single factor contributes most to the largest KPI drift.
+
+**What it means:** v1's version was correct for that specific pair of logs but hardcoded — a general product needs this panel to identify *whatever* the dominant driver actually is for the runs loaded, which could be a different mechanism entirely (e.g., a longer prompt, a different tool policy, more retries) depending on the data.
+
+| # | Element | Behavior |
+|---|---|---|
+| 9.1 | Heading | Auto-generated one-line summary of the top driver (e.g., "A browser-automation excursion, not prompt wording" was correct for that comparison; for a different comparison it might read "A retry loop on one run's test suite, not prompt wording") |
+| 9.2 | Body paragraph | Auto-generated explanation citing the specific tool calls / metrics behind the claim, same style/specificity as v1's paragraph |
+| 9.3 | Mini-stats row | 2–3 supporting numbers, chosen based on which raw metrics the narrative cites (not a fixed three slots) |
+| 9.4 | **[NEW] Multi-driver case** | If no single factor clearly dominates (e.g., drift is spread evenly across several unrelated metrics), the panel says so explicitly — *"No single dominant driver identified; see the full comparison table for the complete picture"* — rather than forcing a narrative where one doesn't exist |
+
+> **Your notes:**
+
+---
+
+## 10. Full comparison table **[UPDATED — dynamic columns]**
+
+**What it shows:** Same row-per-metric structure as v1, but the column set is generated from the runs loaded instead of fixed "Detailed / Generic" columns.
+
+| # | Change |
+|---|---|
+| 10.1 | Columns become: Metric \| Run 1 \| Run 2 \| … \| Run N \| Spread \| Signal. Run column headers use each run's short label + color swatch from §0. |
+| 10.2 | **[NEW] "Spread" column** — replaces v1's single "Diff" column when N>2 (for N=2 it can still just show the simple diff, as in v1). For N>2, shows the range or coefficient of variation across runs at a glance, before the reader even looks at individual values. |
+| 10.3 | Signal column | Unchanged meaning from v1 (No drift / Moderate / Large / Categorical / Uninterpretable / Cannot determine), computed across all N runs rather than just a pairwise diff. |
+| 10.4 | Wide-table handling | With enough runs, the table scrolls horizontally within its own card (frozen Metric column), rather than the whole page scrolling sideways. |
+
+> **Your notes:**
+
+---
+
+## 11. Legend / footer **[UPDATED — dynamic run list]**
+
+| # | Change |
+|---|---|
+| 11.1 | Run color dots are generated from §0's palette, one per loaded run, instead of two hardcoded entries. |
+| 11.2 | Signal-color legend (red/yellow/gray) is unchanged from v1. |
+
+> **Your notes:**
+
+---
+
+## 12. Single-run view **[NEW — for the N=1 case]**
+
+**What it shows:** When only one log is uploaded, the dashboard shell stays the same (top bar, run identity card) but everything comparison-shaped disappears:
+
+| # | Behavior |
+|---|---|
+| 12.1 | No Relatedness Check screen (nothing to compare) |
+| 12.2 | KPI section shows this run's headline numbers with no "vs" language and no drift chips (there's no baseline to drift from) |
+| 12.3 | Charts show this run's own values only (e.g., overhead-ratio trend is a single line, not a comparison) |
+| 12.4 | Full table becomes a simple metrics list: Metric \| Value — no Diff/Signal columns |
+| 12.5 | Root cause / top driver panel is replaced by a plain "Session summary" panel (no comparison to explain) |
+
+> **Your notes:**
+
+---
+
+## 13. Open design decisions carried over from the spec
+
+These mirror the "Open Questions" section of `telemetry-drift-detector-spec-input.md` — flagging them here too since they directly affect layout, not just backend logic:
+
+- Exact N threshold for switching charts to Distribution mode (§7.5) — default suggested at 6, not fixed.
+- Whether the Relatedness Check screen (§3) should ever hard-block continuing, or always stay advisory as designed here.
+- Whether "Review recommended" (yellow, partial-confidence) relatedness results should also inject an inline badge back on the Dashboard (similar to §5.3), so the caveat stays visible even after the user clicks past the check screen.
+
+> **Your notes:**
+
+---
+
+## 14. Anything else to add or change
+
+> **Your notes:**

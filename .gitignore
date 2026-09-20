@@ -1,0 +1,16 @@
+node_modules/
+dist/
+build/
+*.log
+.env
+.env.*
+.DS_Store
+Thumbs.db
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+__pycache__/
+*.pyc
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
