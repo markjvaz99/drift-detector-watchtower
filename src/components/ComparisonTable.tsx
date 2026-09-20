@@ -5,6 +5,8 @@ import { findEvidenceForMetric } from "../drift/findEvidenceForMetric";
 import { identifyOutliers } from "../drift/identifyOutliers";
 import { EvidenceDrilldownPanel } from "./EvidenceDrilldownPanel";
 import { PinMetricToggle } from "./PinMetricToggle";
+import { SignalBadge } from "./SignalBadge";
+import { runColor } from "../ui/runColors";
 
 export interface ComparisonTableProps {
   comparison: Comparison;
@@ -37,12 +39,15 @@ export function ComparisonTable({
   const colCount = runs.length + 7 + (showPinColumn ? 1 : 0);
 
   return (
+    <div className="table-scroll">
     <table className="comparison-table">
       <thead>
         <tr>
           <th>Metric</th>
-          {runs.map((run) => (
-            <th key={run.id}>{run.label}</th>
+          {runs.map((run, index) => (
+            <th key={run.id} style={{ color: runColor(index) }}>
+              {run.label}
+            </th>
           ))}
           <th>Min</th>
           <th>Median</th>
@@ -62,19 +67,26 @@ export function ComparisonTable({
             <Fragment key={metric.key}>
               <tr>
                 <td>
-                  <button type="button" onClick={() => setExpandedMetricKey(
-                    expandedMetricKey === metric.key ? null : metric.key,
-                  )}>
+                  <button
+                    type="button"
+                    className="metric-name-btn"
+                    onClick={() => setExpandedMetricKey(
+                      expandedMetricKey === metric.key ? null : metric.key,
+                    )}
+                  >
                     {metric.label}
                   </button>
                 </td>
                 {runs.map((run) => {
                   const value = metric.valuesByRun.get(run.id);
+                  const unavailable = value === "not-available" || value === undefined;
                   return (
-                    <td key={run.id}>
-                      {value === "not-available" || value === undefined
+                    <td key={run.id} className={unavailable ? "cell-unavailable" : undefined}>
+                      {unavailable
                         ? "not available for this run"
-                        : value}
+                        : typeof value === "number"
+                          ? formatNumber(value)
+                          : value}
                     </td>
                   );
                 })}
@@ -90,7 +102,7 @@ export function ComparisonTable({
                     : "—"}
                 </td>
                 <td>
-                  {classification?.severity}
+                  {classification && <SignalBadge severity={classification.severity} />}
                   {classification?.overriddenByConfound && (
                     <span
                       className="confound-flag"
@@ -133,5 +145,6 @@ export function ComparisonTable({
         })}
       </tbody>
     </table>
+    </div>
   );
 }

@@ -11,6 +11,7 @@ export function PinMetricToggle({ metricKey, metricLabel, pinned, onPin, onUnpin
     <button
       type="button"
       className="pin-metric-toggle"
+      data-pinned={pinned}
       aria-pressed={pinned}
       aria-label={pinned ? `Unpin ${metricLabel}` : `Pin ${metricLabel}`}
       onClick={() => (pinned ? onUnpin(metricKey) : onPin(metricKey))}

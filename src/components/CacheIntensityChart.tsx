@@ -1,7 +1,7 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import type { LogFile, Run } from "../types";
 import { computeCacheIntensityMetrics } from "../metrics/cacheIntensity";
 import { DistributionChart } from "./DistributionChart";
+import { HorizontalBarRows } from "./HorizontalBarRows";
 
 export interface CacheIntensityChartProps {
   runs: Run[];
@@ -27,7 +27,8 @@ function numericValueByRun(runs: Run[], logFilesById: Map<string, LogFile>, metr
 export function CacheIntensityChart({ runs, logFilesById }: CacheIntensityChartProps) {
   if (runs.length > 8) {
     return (
-      <div className="cache-intensity-chart" data-layout="aggregate">
+      <div className="cache-intensity-chart card" data-layout="aggregate">
+        <p className="chart-card-title">Cache-creation intensity</p>
         {SUB_METRICS.map((sub) => (
           <DistributionChart key={sub.key} title={sub.label} points={numericValueByRun(runs, logFilesById, sub.key)} />
         ))}
@@ -37,7 +38,8 @@ export function CacheIntensityChart({ runs, logFilesById }: CacheIntensityChartP
 
   if (runs.length >= 5) {
     return (
-      <div className="cache-intensity-chart" data-layout="strip">
+      <div className="cache-intensity-chart card" data-layout="strip">
+        <p className="chart-card-title">Cache-creation intensity</p>
         {SUB_METRICS.map((sub) => {
           const points = numericValueByRun(runs, logFilesById, sub.key);
           const max = Math.max(1, ...points.map((p) => p.value));
@@ -59,28 +61,21 @@ export function CacheIntensityChart({ runs, logFilesById }: CacheIntensityChartP
     );
   }
 
-  const data = SUB_METRICS.map((sub) => {
-    const row: Record<string, string | number> = { metric: sub.label };
-    for (const run of runs) {
-      const logFile = logFilesById.get(run.sourceLogFileId);
-      const metrics = logFile ? computeCacheIntensityMetrics(logFile) : [];
-      const found = metrics.find((m) => m.key === sub.key);
-      row[run.label] = found && typeof found.value === "number" ? found.value : 0;
-    }
-    return row;
-  });
+  const groups = SUB_METRICS.map((sub) => ({
+    label: sub.label,
+    bars: numericValueByRun(runs, logFilesById, sub.key).map((point, index) => ({
+      runIndex: index,
+      value: point.value,
+      displayValue: point.value.toLocaleString(undefined, { maximumFractionDigits: 0 }),
+    })),
+  }));
+  const maxValue = Math.max(1, ...groups.flatMap((g) => g.bars.map((b) => b.value)));
 
   return (
-    <div className="cache-intensity-chart" data-layout="grouped-bars">
-      <BarChart width={480} height={260} data={data}>
-        <XAxis dataKey="metric" />
-        <YAxis />
-        <Tooltip />
-        <Legend />
-        {runs.map((run) => (
-          <Bar key={run.id} dataKey={run.label} />
-        ))}
-      </BarChart>
+    <div className="cache-intensity-chart card" data-layout="grouped-bars">
+      <p className="chart-card-title">Cache-creation intensity</p>
+      <p className="chart-card-subtitle">Fresh context tokens per unit of work</p>
+      <HorizontalBarRows groups={groups} maxValue={maxValue} />
     </div>
   );
 }

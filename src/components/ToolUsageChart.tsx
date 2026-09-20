@@ -1,8 +1,7 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import type { LogFile, Run } from "../types";
 import { computeToolUsageByName } from "../metrics/toolUsage";
-import { isCategoricalToolUsageDifference } from "../drift/categoricalDifference";
 import { DistributionChart } from "./DistributionChart";
+import { HorizontalBarRows } from "./HorizontalBarRows";
 import type { Metric } from "../types";
 
 export interface ToolUsageChartProps {
@@ -32,7 +31,8 @@ export function ToolUsageChart({ runs, logFilesById }: ToolUsageChartProps) {
 
   if (runs.length > 8) {
     return (
-      <div className="tool-usage-chart" data-layout="aggregate">
+      <div className="tool-usage-chart card" data-layout="aggregate">
+        <p className="chart-card-title">Tool usage by type</p>
         {toolMetrics.map((metric) => (
           <DistributionChart
             key={metric.key}
@@ -48,28 +48,20 @@ export function ToolUsageChart({ runs, logFilesById }: ToolUsageChartProps) {
     );
   }
 
-  const data = toolMetrics.map((metric) => {
-    const row: Record<string, string | number | boolean> = {
-      tool: metric.label,
-      categorical: isCategoricalToolUsageDifference(metric),
-    };
-    for (const run of runs) {
-      row[run.label] = Number(metric.valuesByRun.get(run.id) ?? 0);
-    }
-    return row;
-  });
+  const groups = toolMetrics.map((metric) => ({
+    label: metric.label,
+    bars: runs.map((run, index) => {
+      const value = Number(metric.valuesByRun.get(run.id) ?? 0);
+      return { runIndex: index, value, displayValue: String(value) };
+    }),
+  }));
+  const maxValue = Math.max(1, ...groups.flatMap((g) => g.bars.map((b) => b.value)));
 
   return (
-    <div className="tool-usage-chart" data-layout="grouped-bars">
-      <BarChart width={480} height={Math.max(200, toolMetrics.length * 40)} data={data} layout="vertical">
-        <XAxis type="number" />
-        <YAxis type="category" dataKey="tool" width={140} />
-        <Tooltip />
-        <Legend />
-        {runs.map((run) => (
-          <Bar key={run.id} dataKey={run.label} />
-        ))}
-      </BarChart>
+    <div className="tool-usage-chart card" data-layout="grouped-bars">
+      <p className="chart-card-title">Tool usage by type</p>
+      <p className="chart-card-subtitle">Executed tool calls, by tool name</p>
+      <HorizontalBarRows groups={groups} maxValue={maxValue} />
     </div>
   );
 }

@@ -387,4 +387,117 @@ write(
   ]),
 );
 
+// real-schema-sample.jsonl — reproduces the *actual* Claude Code OTLP export
+// shape observed from real telemetry (as opposed to this generator's other
+// fixtures, which follow the shape originally assumed by the spec): resource
+// attributes carry no session/vcs identity at all; session.id lives on every
+// individual log record instead; the API-call event is named "api_request";
+// tool_decision.decision is "accept"/"reject" with the source under "source";
+// tool_result carries a boolean "success" plus a JSON-encoded "tool_input"
+// (old_string/new_string for Edit, content for Write) instead of top-level
+// new_content/old_content. No PII — synthetic values throughout.
+function realSchemaResourceLogs(logRecords) {
+  return {
+    resourceLogs: [
+      {
+        resource: {
+          attributes: [
+            attr("os.type", "darwin"),
+            attr("os.version", "24.6.0"),
+            attr("host.arch", "amd64"),
+            attr("service.name", "claude-code"),
+            attr("service.version", "2.1.277"),
+          ],
+        },
+        scopeLogs: [{ logRecords }],
+      },
+    ],
+  };
+}
+
+function realRecord(sessionId, name, sequence, attrs, stepMs = 1000) {
+  return {
+    timeUnixNano: nextNano(stepMs),
+    attributes: [
+      attr("session.id", sessionId),
+      attr("event.name", name),
+      attr("event.sequence", sequence),
+      ...attrs,
+    ],
+  };
+}
+
+function realToolPair(sessionId, seqBase, toolUseId, toolName, extra = {}) {
+  const decision = realRecord(sessionId, "tool_decision", seqBase, [
+    attr("tool_use_id", toolUseId),
+    attr("tool_name", toolName),
+    attr("decision", extra.decision ?? "accept"),
+    attr("source", extra.source ?? "config"),
+  ]);
+  const records = [decision];
+  if ((extra.decision ?? "accept") === "accept") {
+    const toolInput = extra.toolInput ? JSON.stringify(extra.toolInput) : "{}";
+    records.push(
+      realRecord(sessionId, "tool_result", seqBase + 1, [
+        attr("tool_use_id", toolUseId),
+        attr("tool_name", toolName),
+        attr("success", extra.success ?? true),
+        attr("tool_input", toolInput),
+      ]),
+    );
+  }
+  return records;
+}
+
+nanoCounter = 1_700_000_010_000_000_000n;
+const REAL_SESSION_ID = "real-schema-session-1";
+write(
+  "real-schema-sample.jsonl",
+  toJsonl([
+    realSchemaResourceLogs([
+      realRecord(REAL_SESSION_ID, "hook_registered", 0, [attr("hook_event", "Stop")]),
+      realRecord(REAL_SESSION_ID, "user_prompt", 1, [
+        attr("prompt", "Implement a monthly-budget feature that lets users set spending limits."),
+        attr("prompt_length", 70),
+      ]),
+      realRecord(REAL_SESSION_ID, "api_request", 2, [
+        attr("input_tokens", 500),
+        attr("output_tokens", 300),
+        attr("cache_read_tokens", 100),
+        attr("cache_creation_tokens", 2000),
+        attr("cost_usd", 0.05),
+      ]),
+      ...realToolPair(REAL_SESSION_ID, 3, "tu_real_1", "Read"),
+      realRecord(REAL_SESSION_ID, "api_request", 5, [
+        attr("input_tokens", 400),
+        attr("output_tokens", 250),
+        attr("cache_read_tokens", 1800),
+        attr("cache_creation_tokens", 100),
+        attr("cost_usd", 0.04),
+      ]),
+      ...realToolPair(REAL_SESSION_ID, 6, "tu_real_2", "Edit", {
+        toolInput: {
+          file_path: "/repo/app.py",
+          old_string: "return a - b",
+          new_string: "return a + b # fixed",
+        },
+      }),
+      realRecord(REAL_SESSION_ID, "api_request", 8, [
+        attr("input_tokens", 300),
+        attr("output_tokens", 150),
+        attr("cache_read_tokens", 2500),
+        attr("cache_creation_tokens", 50),
+        attr("cost_usd", 0.03),
+      ]),
+      ...realToolPair(REAL_SESSION_ID, 9, "tu_real_3", "Bash", {
+        source: "user_temporary",
+      }),
+      ...realToolPair(REAL_SESSION_ID, 11, "tu_real_rejected", "Bash", {
+        decision: "reject",
+        source: "user_reject",
+      }),
+    ]),
+  ]),
+);
+
 console.log("Fixture generation complete.");

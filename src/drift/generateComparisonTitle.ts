@@ -4,6 +4,7 @@ const STOPWORDS = new Set([
   "a", "an", "the", "this", "that", "and", "or", "to", "of", "in", "on", "for",
   "with", "is", "are", "it", "be", "as", "at", "by", "we", "our", "please",
   "implement", "add", "update", "fix", "refactor", "create", "make",
+  "you", "your", "working", "session", "pasted", "content", "existing",
 ]);
 
 function titleCase(word: string): string {
@@ -15,6 +16,9 @@ export function generateComparisonTitle(runs: Run[]): string {
   if (!sourcePrompt) return "Comparison";
 
   const tokens = sourcePrompt
+    // Strip wrapper markup some clients add around pasted prompt text
+    // (e.g. <pasted_content id="...">...</pasted_content>) before tokenizing.
+    .replace(/<[^>]+>/g, " ")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)

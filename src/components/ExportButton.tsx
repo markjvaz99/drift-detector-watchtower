@@ -8,7 +8,7 @@ export interface ExportButtonProps {
 
 export function ExportButton({ comparison, runs }: ExportButtonProps) {
   return (
-    <button type="button" className="export-button" onClick={() => exportReport(comparison, runs)}>
+    <button type="button" className="export-button btn btn-primary" onClick={() => exportReport(comparison, runs)}>
       Export report
     </button>
   );

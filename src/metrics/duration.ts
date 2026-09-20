@@ -30,7 +30,9 @@ export function computeDurationBreakdown(logFile: LogFile): DurationBreakdown {
     const gap = new Date(next.timestamp).getTime() - new Date(current.timestamp).getTime();
     if (gap <= 0) continue;
 
-    const decisionSource = current.attributes["decision_source"];
+    // Real telemetry's tool_decision carries this as "source"; synthetic
+    // fixtures use "decision_source".
+    const decisionSource = current.attributes["source"] ?? current.attributes["decision_source"];
     if (current.type === "tool_decision" && HUMAN_APPROVAL_SOURCES.has(String(decisionSource))) {
       approvalWaitMs += gap;
     } else if (gap >= IDLE_THRESHOLD_MS) {

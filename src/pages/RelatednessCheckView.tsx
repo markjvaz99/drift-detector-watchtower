@@ -13,6 +13,12 @@ const RATING_LABEL: Record<PairwiseRelatedness["confidence"], string> = {
   unrelated: "Unrelated",
 };
 
+const RATING_CLASS: Record<PairwiseRelatedness["confidence"], string> = {
+  related: "signal-badge--neutral",
+  partial: "signal-badge--moderate",
+  unrelated: "signal-badge--large",
+};
+
 function runLabel(runsById: Map<string, Run>, runId: string): string {
   return runsById.get(runId)?.label ?? runId;
 }
@@ -29,39 +35,56 @@ export function RelatednessCheckView({
   );
 
   return (
-    <div className="relatedness-check-view">
-      <h1>Checking task relatedness across {assessment.runIds.length} runs</h1>
-
-      {assessment.clusters.map((cluster) => (
-        <div key={cluster.runIds.join(",")} className="relatedness-row" data-rating="related">
-          <span>{cluster.runIds.map((id) => runLabel(runsById, id)).join(", ")}</span>
-          <span>{RATING_LABEL.related}</span>
-          <p>{cluster.pairwiseDetails[0]?.reasoning}</p>
-        </div>
-      ))}
-
-      {standalonePairs.map((pair) => (
-        <div
-          key={`${pair.runIdA}-${pair.runIdB}`}
-          className="relatedness-row"
-          data-rating={pair.confidence}
-        >
-          <span>
-            {runLabel(runsById, pair.runIdA)}, {runLabel(runsById, pair.runIdB)}
+    <div className="relatedness-check-view app-shell">
+      <header className="app-header">
+        <div className="app-header-title">
+          <span className="app-header-logo">
+            <span className="app-header-logo-mark" />
+            DRIFT
           </span>
-          <span>{RATING_LABEL[pair.confidence]}</span>
-          <p>{pair.reasoning}</p>
         </div>
-      ))}
+      </header>
 
-      <button type="button" onClick={onContinue}>
-        Continue to comparison
-      </button>
-      {assessment.hasAnyBelowFullConfidence && (
-        <button type="button" onClick={onViewIndividually}>
-          View runs individually instead
+      <h1 className="page-heading">Checking task relatedness across {assessment.runIds.length} runs</h1>
+
+      <div className="relatedness-rows">
+        {assessment.clusters.map((cluster) => (
+          <div key={cluster.runIds.join(",")} className="relatedness-row card" data-rating="related">
+            <div className="relatedness-row-header">
+              <span className="relatedness-row-runs">{cluster.runIds.map((id) => runLabel(runsById, id)).join(", ")}</span>
+              <span className={`signal-badge ${RATING_CLASS.related}`}>{RATING_LABEL.related}</span>
+            </div>
+            <p className="relatedness-row-reasoning">{cluster.pairwiseDetails[0]?.reasoning}</p>
+          </div>
+        ))}
+
+        {standalonePairs.map((pair) => (
+          <div
+            key={`${pair.runIdA}-${pair.runIdB}`}
+            className="relatedness-row card"
+            data-rating={pair.confidence}
+          >
+            <div className="relatedness-row-header">
+              <span className="relatedness-row-runs">
+                {runLabel(runsById, pair.runIdA)}, {runLabel(runsById, pair.runIdB)}
+              </span>
+              <span className={`signal-badge ${RATING_CLASS[pair.confidence]}`}>{RATING_LABEL[pair.confidence]}</span>
+            </div>
+            <p className="relatedness-row-reasoning">{pair.reasoning}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="relatedness-actions">
+        <button type="button" className="btn btn-primary" onClick={onContinue}>
+          Continue to comparison
         </button>
-      )}
+        {assessment.hasAnyBelowFullConfidence && (
+          <button type="button" className="btn" onClick={onViewIndividually}>
+            View runs individually instead
+          </button>
+        )}
+      </div>
     </div>
   );
 }

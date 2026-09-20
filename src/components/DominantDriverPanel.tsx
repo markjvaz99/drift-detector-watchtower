@@ -6,13 +6,15 @@ export interface DominantDriverPanelProps {
 
 export function DominantDriverPanel({ finding }: DominantDriverPanelProps) {
   return (
-    <section className="dominant-driver-panel" aria-label="Dominant driver">
-      <h2>Dominant driver</h2>
-      <p>{finding.explanation}</p>
+    <section className="dominant-driver-panel card" aria-label="Dominant driver">
+      <p className="eyebrow eyebrow--accent">Root cause</p>
+      <p className="root-cause-explanation">{finding.explanation}</p>
       {finding.hasDominantDriver && finding.supportingNumbers.length > 0 && (
         <ul className="dominant-driver-numbers">
           {finding.supportingNumbers.map((n, i) => (
-            <li key={i}>{n}</li>
+            <li key={i}>
+              <span className="dominant-driver-number">{n}</span>
+            </li>
           ))}
         </ul>
       )}

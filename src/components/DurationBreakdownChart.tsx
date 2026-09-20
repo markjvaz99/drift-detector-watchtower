@@ -1,12 +1,18 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
 import type { LogFile, Run } from "../types";
 import { computeDurationBreakdown } from "../metrics/duration";
 import { DistributionChart } from "./DistributionChart";
+import { runColor } from "../ui/runColors";
 
 export interface DurationBreakdownChartProps {
   runs: Run[];
   logFilesById: Map<string, LogFile>;
 }
+
+const CATEGORIES = [
+  { key: "activeMs", label: "Active" },
+  { key: "approvalWaitMs", label: "Approval-wait time" },
+  { key: "otherIdleMs", label: "Other idle" },
+] as const;
 
 export function DurationBreakdownChart({ runs, logFilesById }: DurationBreakdownChartProps) {
   const breakdowns = runs.map((run) => ({
@@ -18,7 +24,8 @@ export function DurationBreakdownChart({ runs, logFilesById }: DurationBreakdown
 
   if (runs.length > 8) {
     return (
-      <div className="duration-breakdown-chart" data-layout="aggregate">
+      <div className="duration-breakdown-chart card" data-layout="aggregate">
+        <p className="chart-card-title">Where the wall-clock time went</p>
         <DistributionChart
           title="Active time"
           points={breakdowns.map(({ run, breakdown }) => ({ runId: run.id, label: run.label, value: breakdown.activeMs }))}
@@ -35,25 +42,37 @@ export function DurationBreakdownChart({ runs, logFilesById }: DurationBreakdown
     );
   }
 
-  // Bars stack vertically as N grows rather than assuming exactly two groups.
-  const data = breakdowns.map(({ run, breakdown }) => ({
-    run: run.label,
-    "Active time": breakdown.activeMs,
-    "Approval-wait time": breakdown.approvalWaitMs,
-    "Other idle time": breakdown.otherIdleMs,
-  }));
-
   return (
-    <div className="duration-breakdown-chart" data-layout="stacked-bars">
-      <BarChart width={480} height={Math.max(200, runs.length * 36)} data={data} layout="vertical">
-        <XAxis type="number" />
-        <YAxis type="category" dataKey="run" width={80} />
-        <Tooltip />
-        <Legend />
-        <Bar dataKey="Active time" stackId="duration" />
-        <Bar dataKey="Approval-wait time" stackId="duration" />
-        <Bar dataKey="Other idle time" stackId="duration" />
-      </BarChart>
+    <div className="duration-breakdown-chart card" data-layout="stacked-bars">
+      <p className="chart-card-title">Where the wall-clock time went</p>
+      <p className="chart-card-subtitle">Share of total session duration</p>
+      <div className="duration-breakdown-rows">
+        {breakdowns.map(({ run, breakdown }, index) => {
+          const total = breakdown.totalMs || 1;
+          const color = runColor(index);
+          return (
+            <div key={run.id} className="duration-run-block">
+              <p className="run-summary-title" style={{ color }}>
+                <span className="run-summary-dot" style={{ background: color }} />
+                {run.label}
+              </p>
+              {CATEGORIES.map((cat) => {
+                const ms = breakdown[cat.key];
+                const pct = (ms / total) * 100;
+                return (
+                  <div key={cat.key} className="hbar-row">
+                    <span className="duration-cat-label">{cat.label}</span>
+                    <div className="hbar-track">
+                      <div className="hbar-fill" style={{ width: `${Math.min(100, pct)}%`, background: color }} />
+                    </div>
+                    <span className="hbar-value">{pct.toFixed(1)}%</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

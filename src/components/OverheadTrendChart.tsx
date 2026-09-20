@@ -1,7 +1,8 @@
-import { LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import type { LogFile, Run } from "../types";
 import { computeOverheadTrend, computeOverheadTrendMetrics } from "../metrics/overheadTrend";
 import { DistributionChart } from "./DistributionChart";
+import { runColor } from "../ui/runColors";
 
 export interface OverheadTrendChartProps {
   runs: Run[];
@@ -20,7 +21,8 @@ export function OverheadTrendChart({ runs, logFilesById }: OverheadTrendChartPro
   if (runs.length > 8) {
     const points = runs.map((run) => ({ runId: run.id, label: run.label, value: growthMultiple(run, logFilesById) }));
     return (
-      <div className="overhead-trend-chart" data-layout="aggregate">
+      <div className="overhead-trend-chart card" data-layout="aggregate">
+        <p className="chart-card-title">Overhead ratio across the session</p>
         <DistributionChart title="Overhead-ratio growth multiple" points={points} />
       </div>
     );
@@ -55,20 +57,33 @@ export function OverheadTrendChart({ runs, logFilesById }: OverheadTrendChartPro
   );
 
   return (
-    <div className="overhead-trend-chart" data-layout="lines">
-      <LineChart width={480} height={260} data={data}>
-        <XAxis dataKey="bucketIndex" />
-        <YAxis />
-        <Tooltip />
-        {runs.map((run) => (
+    <div className="overhead-trend-chart card" data-layout="lines">
+      <p className="chart-card-title">Overhead ratio across the session</p>
+      <p className="chart-card-subtitle">cache_read ÷ output_tokens, by session quartile</p>
+      <LineChart width={460} height={220} data={data}>
+        <CartesianGrid stroke="var(--border-subtle)" vertical={false} />
+        <XAxis dataKey="bucketIndex" stroke="var(--text-muted)" tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
+        <YAxis stroke="var(--text-muted)" tick={{ fill: "var(--text-muted)", fontSize: 11 }} />
+        <Tooltip contentStyle={{ background: "var(--bg-elevated)", border: "1px solid var(--card-border)", fontSize: 12 }} />
+        {runs.map((run, index) => (
           <Line
             key={run.id}
             dataKey={run.label}
             dot={false}
+            stroke={runColor(index)}
+            strokeWidth={2}
             strokeOpacity={shouldFade && !highlightedRunIds.has(run.id) ? 0.25 : 1}
           />
         ))}
       </LineChart>
+      <p className="chart-card-footnote">
+        {runs.map((run, index) => (
+          <span key={run.id} style={{ color: runColor(index) }}>
+            {run.label} — {growthMultiple(run, logFilesById).toFixed(1)}x growth
+            {index < runs.length - 1 ? "  " : ""}
+          </span>
+        ))}
+      </p>
     </div>
   );
 }

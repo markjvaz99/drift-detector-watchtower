@@ -6,9 +6,9 @@ export interface SessionSummaryPanelProps {
 
 export function SessionSummaryPanel({ summary }: SessionSummaryPanelProps) {
   return (
-    <section className="session-summary-panel" aria-label="Session summary">
-      <h2>Session summary</h2>
-      <p>{summary.summaryText}</p>
+    <section className="session-summary-panel card" aria-label="Session summary">
+      <p className="eyebrow eyebrow--accent">Session summary</p>
+      <p className="root-cause-explanation">{summary.summaryText}</p>
     </section>
   );
 }

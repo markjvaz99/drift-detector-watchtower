@@ -34,8 +34,12 @@ export function buildRunFromText(fileName: string, text: string): BuiltRun {
   };
 
   const promptEvents = events.filter((event) => event.type === "user_prompt");
-  const taskPromptText =
-    promptEvents.length > 0 ? asString(promptEvents[promptEvents.length - 1].attributes["prompt_text"]) : "";
+  const lastPromptAttrs = promptEvents[promptEvents.length - 1]?.attributes;
+  // Real telemetry carries the prompt text as "prompt"; synthetic fixtures
+  // (and the original spec's assumed schema) use "prompt_text".
+  const taskPromptText = lastPromptAttrs
+    ? asString(lastPromptAttrs["prompt"]) || asString(lastPromptAttrs["prompt_text"])
+    : "";
 
   const resentPromptNote = detectResentPrompt(events, logFileId, flattened.sessionIdentifier);
   const dataQualityNotes = resentPromptNote ? [resentPromptNote] : [];

@@ -32,4 +32,16 @@ describe("generateComparisonTitle", () => {
     const title = generateComparisonTitle([makeRun("the a an")]);
     expect(title).toBe("Comparison");
   });
+
+  it("strips <pasted_content> wrapper markup real clients add around pasted prompts", () => {
+    const title = generateComparisonTitle([
+      makeRun(
+        '<pasted_content id="92c6">\nYou are working on an existing simple expense-tracker codebase.\n\nImplement a Monthly Budget feature.\n</pasted_content>',
+      ),
+    ]);
+    expect(title.toLowerCase()).not.toContain("pasted");
+    expect(title.toLowerCase()).not.toContain("content");
+    expect(title.toLowerCase()).not.toContain("92c6");
+    expect(title.toLowerCase()).toMatch(/simple|expense|tracker|codebase/);
+  });
 });

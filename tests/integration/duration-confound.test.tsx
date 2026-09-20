@@ -29,6 +29,6 @@ describe("ComparisonView — approval-wait-dominated duration confound", () => {
     );
 
     expect(screen.getAllByText("Approval-wait time").length).toBeGreaterThan(0);
-    expect(screen.getByText(/uninterpretable/)).toBeInTheDocument();
+    expect(screen.getAllByText(/uninterpretable/).length).toBeGreaterThan(0);
   });
 });

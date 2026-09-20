@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import type { LogFile, RelatednessAssessment, Run } from "../types";
 import { RelatednessReminderBadge } from "../components/RelatednessReminderBadge";
 import { ComparisonTable } from "../components/ComparisonTable";
-import { DataQualityNoteBadge } from "../components/DataQualityNoteBadge";
-import { RejectedCallBadge } from "../components/RejectedCallBadge";
-import { UnrecognizedEventsNotice } from "../components/UnrecognizedEventsNotice";
+import { RunSummaryCards } from "../components/RunSummaryCards";
+import { DataValidityBox } from "../components/DataValidityBox";
 import { PairwiseSelector } from "../components/PairwiseSelector";
 import { CacheIntensityChart } from "../components/CacheIntensityChart";
 import { OverheadTrendChart } from "../components/OverheadTrendChart";
@@ -13,6 +12,7 @@ import { DurationBreakdownChart } from "../components/DurationBreakdownChart";
 import { HeadlineKpiSection } from "../components/HeadlineKpiSection";
 import { DominantDriverPanel } from "../components/DominantDriverPanel";
 import { ExportButton } from "../components/ExportButton";
+import { SignalLegend } from "../components/SignalLegend";
 import { buildComparison } from "../drift/buildComparison";
 import { useSessionStore } from "../state/sessionStore";
 import { writeRecentComparison } from "../state/localHistoryStore";
@@ -74,26 +74,26 @@ export function ComparisonView({
   );
 
   return (
-    <div className="comparison-view">
-      <h1>{comparison.title}</h1>
+    <div className="comparison-view app-shell">
+      <header className="app-header">
+        <div className="app-header-title">
+          <span className="app-header-logo">
+            <span className="app-header-logo-mark" />
+            DRIFT
+          </span>
+          <span className="app-header-subtitle-divider" aria-hidden="true">/</span>
+          <h1 className="app-header-subtitle">{comparison.title}</h1>
+        </div>
+        <div className="app-header-actions">
+          <ExportButton comparison={comparison} runs={runs} />
+        </div>
+      </header>
+
       <RelatednessReminderBadge assessment={relatednessAssessment} runsById={runsById} />
 
-      {runs.map((run) => {
-        const logFile = logFilesById.get(run.sourceLogFileId);
-        return (
-          <div key={run.id}>
-            {logFile && (
-              <UnrecognizedEventsNotice runLabel={run.label} unrecognizedEventCount={logFile.unrecognizedEventCount} />
-            )}
-            {run.dataQualityNotes.map((note) => (
-              <DataQualityNoteBadge key={note.type} note={note} />
-            ))}
-            {run.rejectedToolCalls.map((outcome) => (
-              <RejectedCallBadge key={outcome.toolUseId} outcome={outcome} />
-            ))}
-          </div>
-        );
-      })}
+      <RunSummaryCards runs={runs} logFilesById={logFilesById} comparison={comparison} />
+
+      <DataValidityBox runs={runs} logFilesById={logFilesById} />
 
       {isReopened && (
         <p role="status" className="reopened-report-notice">
@@ -101,17 +101,25 @@ export function ComparisonView({
         </p>
       )}
 
-      <ExportButton comparison={comparison} runs={runs} />
-
-      {comparison.dominantDriverFinding && <DominantDriverPanel finding={comparison.dominantDriverFinding} />}
-
       <HeadlineKpiSection
         comparison={comparison}
         runs={runs}
         onViewFullTable={() => document.getElementById("full-comparison-table")?.scrollIntoView({ behavior: "smooth" })}
       />
 
-      <div id="full-comparison-table">
+      {!isReopened && (
+        <section className="comparison-charts section-grid-2" aria-label="Comparison charts">
+          <CacheIntensityChart runs={runs} logFilesById={logFilesById} />
+          <ToolUsageChart runs={runs} logFilesById={logFilesById} />
+          <OverheadTrendChart runs={runs} logFilesById={logFilesById} />
+          <DurationBreakdownChart runs={runs} logFilesById={logFilesById} />
+        </section>
+      )}
+
+      {comparison.dominantDriverFinding && <DominantDriverPanel finding={comparison.dominantDriverFinding} />}
+
+      <div id="full-comparison-table" className="card">
+        <p className="card-title">Full comparison</p>
         <ComparisonTable
           comparison={comparison}
           runs={runs}
@@ -123,18 +131,11 @@ export function ComparisonView({
         />
       </div>
 
-      {!isReopened && (
-        <section className="comparison-charts" aria-label="Comparison charts">
-          <CacheIntensityChart runs={runs} logFilesById={logFilesById} />
-          <OverheadTrendChart runs={runs} logFilesById={logFilesById} />
-          <ToolUsageChart runs={runs} logFilesById={logFilesById} />
-          <DurationBreakdownChart runs={runs} logFilesById={logFilesById} />
-        </section>
-      )}
+      <SignalLegend runs={runs} />
 
       {!isReopened && runs.length > 2 && (
-        <section className="pairwise-view" aria-label="Pairwise comparison">
-          <h2>Compare two runs</h2>
+        <section className="pairwise-view card" aria-label="Pairwise comparison">
+          <p className="card-title">Compare two runs</p>
           <PairwiseSelector
             runs={runs}
             selectedRunIdA={pairwiseRunIdA}

@@ -10,6 +10,10 @@ export interface SingleRunViewProps {
   run: Run;
 }
 
+function formatNumber(value: number): string {
+  return Number.isInteger(value) ? String(value) : value.toFixed(2);
+}
+
 export function SingleRunView({ logFile, run }: SingleRunViewProps) {
   if (!run.hasCompletedTaskActivity) {
     return <EmptyRunState />;
@@ -19,23 +23,32 @@ export function SingleRunView({ logFile, run }: SingleRunViewProps) {
   const sessionSummary = composeSessionSummary(run, logFile);
 
   return (
-    <div className="single-run-view">
-      <h1>{run.label}</h1>
+    <div className="single-run-view app-shell">
+      <header className="app-header">
+        <div className="app-header-title">
+          <h1 className="page-heading" style={{ margin: 0 }}>{run.label}</h1>
+        </div>
+      </header>
       <UnrecognizedEventsNotice runLabel={run.label} unrecognizedEventCount={logFile.unrecognizedEventCount} />
       <SessionSummaryPanel summary={sessionSummary} />
-      <table>
-        <tbody>
-          {metrics.map((metric) => (
-            <tr key={metric.key}>
-              <td>{metric.label}</td>
-              <td>
-                {metric.value === "not-available" ? "not available for this run" : metric.value}
-                {metric.denominatorLabel ? ` (${metric.denominatorLabel})` : ""}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <div className="card">
+        <p className="card-title">Metrics</p>
+        <div className="table-scroll">
+          <table className="comparison-table">
+            <tbody>
+              {metrics.map((metric) => (
+                <tr key={metric.key}>
+                  <td>{metric.label}</td>
+                  <td className={metric.value === "not-available" ? "cell-unavailable" : undefined}>
+                    {metric.value === "not-available" ? "not available for this run" : formatNumber(metric.value)}
+                    {metric.denominatorLabel ? ` (${metric.denominatorLabel})` : ""}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
