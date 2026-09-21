@@ -1,6 +1,8 @@
+import type { CSSProperties } from "react";
 import type { Comparison, LogFile, Run } from "../types";
 import { runColor } from "../ui/runColors";
 import { extractPromptRecords } from "../parsing/extractPromptTexts";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 function formatPromptTime(timestamp: string): string {
   const date = new Date(timestamp);
@@ -28,7 +30,7 @@ export function RunSummaryCards({ runs, logFilesById, comparison }: RunSummaryCa
         const promptRecords = logFile ? extractPromptRecords(logFile.events) : [];
         const totalPromptChars = promptRecords.reduce((sum, record) => sum + record.text.length, 0);
         return (
-          <div key={run.id} className="run-summary-card card" style={{ borderTopColor: color }}>
+          <div key={run.id} className="run-summary-card card" style={{ "--run-accent": color } as CSSProperties}>
             <p className="run-summary-title" style={{ color }}>
               <span className="run-summary-dot" style={{ background: color }} />
               {run.label}
@@ -37,7 +39,9 @@ export function RunSummaryCards({ runs, logFilesById, comparison }: RunSummaryCa
             <dl className="run-summary-stats">
               <div>
                 <dt>Prompt</dt>
-                <dd>{totalPromptChars.toLocaleString()} ch</dd>
+                <dd>
+                  <AnimatedNumber text={`${totalPromptChars.toLocaleString()} ch`} delay={800 + index * 350} />
+                </dd>
               </div>
               <div>
                 <dt>Working dir</dt>
@@ -45,11 +49,15 @@ export function RunSummaryCards({ runs, logFilesById, comparison }: RunSummaryCa
               </div>
               <div>
                 <dt>Turns</dt>
-                <dd>{metricValue(comparison, run.id, "turns")}</dd>
+                <dd>
+                  <AnimatedNumber text={metricValue(comparison, run.id, "turns")} delay={800 + index * 350 + 300} />
+                </dd>
               </div>
               <div>
                 <dt>Tool calls</dt>
-                <dd>{metricValue(comparison, run.id, "tool_calls")}</dd>
+                <dd>
+                  <AnimatedNumber text={metricValue(comparison, run.id, "tool_calls")} delay={800 + index * 350 + 600} />
+                </dd>
               </div>
             </dl>
             {promptRecords.length > 0 ? (

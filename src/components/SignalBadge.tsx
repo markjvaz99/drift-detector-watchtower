@@ -5,8 +5,8 @@ const SEVERITY_CLASS: Record<DriftSeverity, string> = {
   moderate: "signal-badge--moderate",
   large: "signal-badge--large",
   categorical: "signal-badge--categorical",
-  "cannot-determine": "signal-badge--neutral",
-  uninterpretable: "signal-badge--neutral",
+  "cannot-determine": "signal-badge--cannot-determine",
+  uninterpretable: "signal-badge--uninterpretable",
 };
 
 export interface SignalBadgeProps {

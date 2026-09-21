@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { join } from "node:path";
 import { loadFixtureRun } from "../helpers/loadFixtureRun";
 import { EvidenceIndex } from "../../src/parsing/evidenceIndex";
@@ -26,7 +26,11 @@ describe("ComparisonView — headline range display for N > 2 runs", () => {
     );
 
     const headline = screen.getByRole("region", { name: /headline drift summary/i });
-    expect(within(headline).getAllByText(/Range: .+–.+/).length).toBeGreaterThan(0);
-    expect(within(headline).getAllByText(/outlier: Run 3/).length).toBeGreaterThan(0);
+    // The min/max values render inside AnimatedNumber's own <span>, so the
+    // "Range: X–Y" text is no longer a single direct text node of one
+    // element — check the section's full aggregate text instead of
+    // getByText, which only matches an element's own direct text nodes.
+    expect(headline.textContent).toMatch(/Range: .+–.+/);
+    expect(headline.textContent).toMatch(/outlier: Run 3/);
   });
 });

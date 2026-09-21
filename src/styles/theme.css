@@ -1,7 +1,9 @@
 :root {
   --bg: #0b0d12;
   --surface-1: #12151c;
+  --surface-1-deep: #0e1015;
   --surface-2: #171b24;
+  --surface-2-deep: #12151d;
   --surface-hover: #1b202a;
   --border: #242a36;
   --border-strong: #323a49;
@@ -20,13 +22,22 @@
 
   --signal-large: #f0555a;
   --signal-large-bg: rgba(240, 85, 90, 0.14);
-  --signal-moderate: #e0ad52;
-  --signal-moderate-bg: rgba(224, 173, 82, 0.14);
+  --signal-moderate: #10b981;
+  --signal-moderate-bg: rgba(16, 185, 129, 0.14);
   --signal-categorical: #ec4899;
   --signal-categorical-bg: rgba(236, 72, 153, 0.14);
   --signal-neutral: #7c8494;
   --signal-neutral-bg: rgba(124, 132, 148, 0.13);
   --signal-warning: #e0ad52;
+  /* "cannot-determine" (insufficient data) and "uninterpretable" (masked by a
+     confound) used to render identically to plain "no-drift" gray — same
+     visual bucket for three semantically different verdicts. Distinct hues
+     so each reads as its own layer of insight at a glance, not just from
+     the text label. */
+  --signal-cannot-determine: #4f8bf0;
+  --signal-cannot-determine-bg: rgba(79, 139, 240, 0.14);
+  --signal-uninterpretable: #9b7ff0;
+  --signal-uninterpretable-bg: rgba(155, 127, 240, 0.14);
 
   --accent: #4f8bf0;
   --accent-soft: rgba(79, 139, 240, 0.15);
@@ -35,9 +46,11 @@
   --radius: 8px;
   --radius-sm: 6px;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.28);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.025);
+  --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --shadow-header: 0 1px 0 rgba(0, 0, 0, 0.4);
+  --glow-accent: 0 0 18px rgba(232, 135, 30, 0.35);
 
   --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Fira Code", Menlo, Consolas, "Liberation Mono", monospace;
@@ -56,6 +69,8 @@ body {
 }
 
 body {
+  background: radial-gradient(ellipse 1400px 700px at 50% -10%, #171b26 0%, var(--bg) 55%);
+  background-attachment: fixed;
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.55;
@@ -169,6 +184,12 @@ h3 {
   border-radius: 5px;
   background: linear-gradient(135deg, var(--run-a), #f5a94a);
   display: inline-block;
+  animation: logoLivePulse 3s ease-in-out infinite;
+}
+
+@keyframes logoLivePulse {
+  0%, 100% { box-shadow: 0 0 6px rgba(232, 135, 30, 0.4); }
+  50% { box-shadow: 0 0 14px rgba(232, 135, 30, 0.7); }
 }
 
 .app-header-subtitle-divider {
@@ -194,12 +215,40 @@ h3 {
 }
 
 .card {
-  background: var(--surface-1);
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(165deg, var(--surface-1) 0%, var(--surface-1-deep) 100%);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   box-shadow: var(--shadow-sm);
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* A drifting purple/blue color sheen behind every card's content —
+   independent of the entrance-fade animation on the card itself (a separate
+   pseudo-element so the two animations never collide on one `animation`
+   shorthand). */
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    rgba(139, 92, 246, 0.16) 0%,
+    transparent 24%,
+    rgba(59, 130, 246, 0.14) 50%,
+    transparent 76%,
+    rgba(139, 92, 246, 0.16) 100%
+  );
+  background-size: 300% 300%;
+  animation: cardGradientFlow 9s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cardGradientFlow {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
 }
 
 /* Vertical spacing between stacked full-width sections is set explicitly
@@ -269,6 +318,7 @@ h3 {
 .run-summary-card:hover {
   border-color: var(--border-strong);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 /* --- Buttons --- */
@@ -284,20 +334,24 @@ h3 {
   height: 29px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
-  background: var(--surface-2);
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface-2-deep) 100%);
   color: var(--text-primary);
   padding: 0 13px;
   cursor: pointer;
-  transition: background-color 0.12s ease, border-color 0.12s ease, filter 0.12s ease, transform 0.05s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: background-color 0.12s ease, border-color 0.12s ease, filter 0.12s ease, transform 0.05s ease,
+    box-shadow 0.15s ease;
 }
 
 .btn:hover {
-  background: var(--surface-hover);
+  background: linear-gradient(180deg, var(--surface-hover) 0%, var(--surface-2-deep) 100%);
   border-color: var(--text-muted);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .btn:active {
   transform: translateY(1px);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 .btn:disabled {
@@ -306,16 +360,21 @@ h3 {
 }
 
 .btn-primary {
-  background: var(--run-a);
+  background: linear-gradient(180deg, #f5a94a 0%, var(--run-a) 100%);
   border-color: var(--run-a);
   color: #1a1206;
   font-weight: 700;
-  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15), 0 0 0 0 transparent;
+  box-shadow: 0 2px 8px rgba(232, 135, 30, 0.25), 0 1px 0 rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .btn-primary:hover {
   filter: brightness(1.08);
-  background: var(--run-a);
+  background: linear-gradient(180deg, #f5a94a 0%, var(--run-a) 100%);
+  box-shadow: 0 0 24px rgba(232, 135, 30, 0.45), 0 2px 4px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+.btn-primary:active {
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.25);
 }
 
 .btn-ghost {
@@ -373,6 +432,16 @@ h3 {
 .signal-badge--categorical {
   background: var(--signal-categorical-bg);
   color: var(--signal-categorical);
+}
+
+.signal-badge--cannot-determine {
+  background: var(--signal-cannot-determine-bg);
+  color: var(--signal-cannot-determine);
+}
+
+.signal-badge--uninterpretable {
+  background: var(--signal-uninterpretable-bg);
+  color: var(--signal-uninterpretable);
 }
 
 .signal-badge--neutral {
@@ -454,6 +523,37 @@ h3 {
   transition: background-color 0.1s ease;
 }
 
+/* One row at a time: each <tr> gets its own animation-delay inline (see
+   ComparisonTable.tsx), reusing the same fadeSlideIn keyframe the rest of
+   the dashboard uses for entrances, so a long table visibly loads in beat
+   by beat instead of appearing (or scrambling) all at once. */
+.comparison-table tbody tr.row-enter {
+  animation: fadeSlideIn 1.4s ease both;
+}
+
+/* Tints the whole row by drift severity so what actually drifted pops out
+   while scanning the table, instead of only being legible via the small
+   Signal-column badge. */
+.comparison-table tbody tr.signal-row--large {
+  background: var(--signal-large-bg);
+}
+
+.comparison-table tbody tr.signal-row--moderate {
+  background: var(--signal-moderate-bg);
+}
+
+.comparison-table tbody tr.signal-row--categorical {
+  background: var(--signal-categorical-bg);
+}
+
+.comparison-table tbody tr.signal-row--cannot-determine {
+  background: var(--signal-cannot-determine-bg);
+}
+
+.comparison-table tbody tr.signal-row--uninterpretable {
+  background: var(--signal-uninterpretable-bg);
+}
+
 .comparison-table tbody tr:hover td {
   background: var(--surface-hover);
 }
@@ -514,16 +614,53 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 7px;
-  border-top: 3px solid var(--kpi-accent, var(--signal-neutral));
+  background: var(--kpi-bg-accent, var(--surface-1));
+  border-top: 3px solid transparent;
+  box-shadow: var(--shadow-sm);
   transition: border-left-color 0.15s ease, border-right-color 0.15s ease, border-bottom-color 0.15s ease,
-    transform 0.15s ease;
+    box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* Overrides the base .card::before sheen with the card's own severity
+   accent — the drift signal itself is what drifts, tying the motion to
+   what the card is actually reporting rather than a generic brand tint. */
+.headline-kpi-card::before {
+  background: linear-gradient(
+    120deg,
+    var(--kpi-accent, var(--signal-neutral)) 0%,
+    transparent 30%,
+    transparent 70%,
+    var(--kpi-accent, var(--signal-neutral)) 100%
+  );
+  background-size: 300% 300%;
+  opacity: 0.24;
+  animation: cardGradientFlow 8s ease-in-out infinite;
+}
+
+/* The severity accent line itself moves too — a purple/blue sweep blended
+   with the card's own severity color, instead of a static solid stripe. */
+.headline-kpi-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--kpi-accent, var(--signal-neutral)) 0%,
+    #8b5cf6 35%,
+    #3b82f6 65%,
+    var(--kpi-accent, var(--signal-neutral)) 100%
+  );
+  background-size: 250% 100%;
+  animation: borderFlow 5s linear infinite;
 }
 
 .headline-kpi-card:hover {
   border-left-color: var(--border-strong);
   border-right-color: var(--border-strong);
   border-bottom-color: var(--border-strong);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 
 .kpi-label {
@@ -537,10 +674,17 @@ h3 {
 
 .kpi-values {
   margin: 0;
-  font-size: 21px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: -0.01em;
   font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Guarantees fixed digit width for the scramble-in effect regardless of
+   context — most call sites already sit in a tabular-nums/monospace
+   ancestor, but this makes AnimatedNumber safe to drop in anywhere. */
+.animated-number {
   font-variant-numeric: tabular-nums;
 }
 
@@ -583,11 +727,6 @@ h3 {
   color: var(--run-a);
 }
 
-.dominant-driver-panel {
-  border-color: var(--border-strong);
-  margin-top: 16px;
-}
-
 .root-cause-explanation {
   margin: 0 0 12px;
   font-size: 14.5px;
@@ -596,34 +735,6 @@ h3 {
   color: var(--text-primary);
   max-width: 78ch;
   letter-spacing: -0.005em;
-}
-
-.dominant-driver-numbers {
-  list-style: none;
-  margin: 0;
-  padding: 10px 0 0;
-  display: flex;
-  gap: 26px;
-  border-top: 1px solid var(--border);
-}
-
-.dominant-driver-numbers li {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.dominant-driver-number {
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--run-a);
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-}
-
-.dominant-driver-number-label {
-  font-size: 11px;
-  color: var(--text-muted);
 }
 
 /* --- Run summary cards --- */
@@ -636,8 +747,29 @@ h3 {
 }
 
 .run-summary-card {
-  border-top: 3px solid;
+  border-top: 3px solid transparent;
   padding-top: 12px;
+}
+
+.run-summary-card::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--run-accent, var(--signal-neutral)) 0%,
+    #8b5cf6 35%,
+    #3b82f6 65%,
+    var(--run-accent, var(--signal-neutral)) 100%
+  );
+  background-size: 250% 100%;
+  animation: borderFlow 5s linear infinite;
+}
+
+@keyframes borderFlow {
+  0% { background-position: 0% 0; }
+  100% { background-position: -150% 0; }
 }
 
 .run-summary-title {
@@ -1109,6 +1241,146 @@ h3 {
   margin-top: 10px;
 }
 
+/* Animated sheen sweeping across an in-progress action (Analyzing…, etc.) —
+   a lightweight "this is actively working" signal beyond a static label. */
+.btn-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-loading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 255, 255, 0.4) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: shimmerSweep 1.6s linear infinite;
+}
+
+@keyframes shimmerSweep {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Spinner is a genuine progress indicator, not a decorative flourish, so it
+   keeps spinning even under prefers-reduced-motion (excluded below). */
+.spinner {
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Entrance animations: the dashboard eases in section by section (and
+   card by card within a grid) on load, instead of the whole page popping
+   in as one static frame. Explicit nth-child delays rather than a JS
+   stagger, since the section/card counts are small and mostly fixed. */
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.comparison-view > *,
+.upload-hero > *,
+.upload-page-grid > * {
+  animation: fadeSlideIn 1.6s ease both;
+}
+
+.run-summary-cards > .run-summary-card,
+.headline-kpi-cards > li,
+.comparison-charts > .card,
+.upload-hero-badges > li {
+  animation: fadeSlideIn 1.5s ease both;
+}
+
+/* An 800ms lead-in before the very first element starts, on top of the
+   per-item step below — so the cascade never appears to start instantly at
+   the moment of paint, giving the eye a clear beat to catch it. */
+
+.comparison-view > *:nth-child(1),
+.run-summary-cards > .run-summary-card:nth-child(1),
+.headline-kpi-cards > li:nth-child(1),
+.comparison-charts > .card:nth-child(1),
+.upload-hero > *:nth-child(1),
+.upload-page-grid > *:nth-child(1),
+.upload-hero-badges > li:nth-child(1) {
+  animation-delay: 800ms;
+}
+
+.comparison-view > *:nth-child(2),
+.run-summary-cards > .run-summary-card:nth-child(2),
+.headline-kpi-cards > li:nth-child(2),
+.comparison-charts > .card:nth-child(2),
+.upload-hero > *:nth-child(2),
+.upload-page-grid > *:nth-child(2),
+.upload-hero-badges > li:nth-child(2) {
+  animation-delay: 1150ms;
+}
+
+.comparison-view > *:nth-child(3),
+.run-summary-cards > .run-summary-card:nth-child(3),
+.headline-kpi-cards > li:nth-child(3),
+.comparison-charts > .card:nth-child(3),
+.upload-hero > *:nth-child(3),
+.upload-page-grid > *:nth-child(3),
+.upload-hero-badges > li:nth-child(3) {
+  animation-delay: 1500ms;
+}
+
+.comparison-view > *:nth-child(4),
+.run-summary-cards > .run-summary-card:nth-child(4),
+.headline-kpi-cards > li:nth-child(4),
+.comparison-charts > .card:nth-child(4),
+.upload-hero-badges > li:nth-child(4) {
+  animation-delay: 1850ms;
+}
+
+.comparison-view > *:nth-child(5),
+.run-summary-cards > .run-summary-card:nth-child(5),
+.headline-kpi-cards > li:nth-child(5) {
+  animation-delay: 2200ms;
+}
+
+.comparison-view > *:nth-child(6),
+.headline-kpi-cards > li:nth-child(6) {
+  animation-delay: 2550ms;
+}
+
+.comparison-view > *:nth-child(7) {
+  animation-delay: 2900ms;
+}
+
+.comparison-view > *:nth-child(n + 8) {
+  animation-delay: 3250ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-header-logo-mark,
+  .btn-loading::after,
+  .card::before,
+  .headline-kpi-card::after,
+  .run-summary-card::after,
+  .comparison-view > *,
+  .run-summary-cards > .run-summary-card,
+  .headline-kpi-cards > li,
+  .comparison-charts > .card,
+  .upload-hero > *,
+  .upload-page-grid > *,
+  .upload-hero-badges > li,
+  .comparison-table tbody tr.row-enter {
+    animation: none;
+  }
+}
+
 .upload-error {
   color: var(--signal-large);
   font-size: 12.5px;
@@ -1479,7 +1751,9 @@ h3 {
   :root {
     --bg: #ffffff;
     --surface-1: #ffffff;
+    --surface-1-deep: #ffffff;
     --surface-2: #f4f5f7;
+    --surface-2-deep: #f4f5f7;
     --surface-hover: #f4f5f7;
     --border: #d8dbe2;
     --border-strong: #b8bdc7;
@@ -1490,7 +1764,25 @@ h3 {
 
     --shadow-sm: none;
     --shadow-md: none;
+    --shadow-lg: none;
     --shadow-header: none;
+    --glow-accent: none;
+  }
+
+  /* The on-screen gradients/glow/animation are chrome-only flourishes — a
+     printed report gets flat, ink-friendly surfaces. */
+  body {
+    background: #ffffff;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+  }
+
+  .card::before {
+    display: none !important;
   }
 
   .app-header {
@@ -1498,6 +1790,10 @@ h3 {
     background: none;
     backdrop-filter: none;
     border-bottom: 2px solid var(--text-primary);
+  }
+
+  .app-header-logo-mark {
+    box-shadow: none;
   }
 
   .app-header-actions,

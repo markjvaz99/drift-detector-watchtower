@@ -8,6 +8,19 @@ import { PinMetricToggle } from "./PinMetricToggle";
 import { SignalBadge } from "./SignalBadge";
 import { Icon } from "./Icon";
 import { runColor } from "../ui/runColors";
+import { AnimatedNumber } from "./AnimatedNumber";
+
+// Each row waits for the previous ones to have (mostly) finished appearing
+// before it renders in — a deliberate one-row-at-a-time reveal rather than a
+// quick ripple, capped so a long table doesn't leave the last rows waiting
+// several seconds. The row's own fade-in and its numbers' scramble share the
+// same delay, so a row visibly arrives and settles as one beat. A lead-in
+// matches the rest of the dashboard's entrance pacing, so the table doesn't
+// start before the sections above it have had their own beat.
+const ROW_DELAY_LEAD_IN_MS = 800;
+const ROW_DELAY_STEP_MS = 220;
+const ROW_DELAY_CAP_MS = 5000;
+const TABLE_SCRAMBLE_DURATION_MS = 1300;
 
 export interface ComparisonTableProps {
   comparison: Comparison;
@@ -60,13 +73,17 @@ export function ComparisonTable({
         </tr>
       </thead>
       <tbody>
-        {comparison.metrics.map((metric) => {
+        {comparison.metrics.map((metric, rowIndex) => {
           const classification = classificationByKey.get(metric.key);
           const stats = statsByKey.get(metric.key);
           const outliers = stats ? identifyOutliers(stats, metric) : [];
+          const rowDelay = ROW_DELAY_LEAD_IN_MS + Math.min(rowIndex * ROW_DELAY_STEP_MS, ROW_DELAY_CAP_MS);
           return (
             <Fragment key={metric.key}>
-              <tr>
+              <tr
+                className={`row-enter${classification ? ` signal-row signal-row--${classification.severity}` : ""}`}
+                style={{ animationDelay: `${rowDelay}ms` }}
+              >
                 <td>
                   <button
                     type="button"
@@ -87,18 +104,46 @@ export function ComparisonTable({
                       className={unavailable ? "cell-unavailable num" : "num"}
                       style={unavailable ? undefined : { color: runColor(index) }}
                     >
-                      {unavailable
-                        ? "not available for this run"
-                        : typeof value === "number"
-                          ? formatNumber(value)
-                          : value}
+                      {unavailable ? (
+                        "not available for this run"
+                      ) : (
+                        <AnimatedNumber
+                          text={typeof value === "number" ? formatNumber(value) : value}
+                          delay={rowDelay}
+                          duration={TABLE_SCRAMBLE_DURATION_MS}
+                        />
+                      )}
                     </td>
                   );
                 })}
-                <td className="num">{stats ? formatNumber(stats.min) : "—"}</td>
-                <td className="num">{stats ? formatNumber(stats.median) : "—"}</td>
-                <td className="num">{stats ? formatNumber(stats.max) : "—"}</td>
-                <td className="num">{stats ? formatNumber(stats.spread) : "—"}</td>
+                <td className="num">
+                  <AnimatedNumber
+                    text={stats ? formatNumber(stats.min) : "—"}
+                    delay={rowDelay}
+                    duration={TABLE_SCRAMBLE_DURATION_MS}
+                  />
+                </td>
+                <td className="num">
+                  <AnimatedNumber
+                    text={stats ? formatNumber(stats.median) : "—"}
+                    delay={rowDelay}
+                    duration={TABLE_SCRAMBLE_DURATION_MS}
+                  />
+                </td>
+                <td className="num">
+                  <AnimatedNumber
+                    text={stats ? formatNumber(stats.max) : "—"}
+                    delay={rowDelay}
+                    duration={TABLE_SCRAMBLE_DURATION_MS}
+                  />
+                </td>
+                <td className="num">
+                  <AnimatedNumber
+                    text={stats ? formatNumber(stats.spread) : "—"}
+                    delay={rowDelay}
+                    duration={TABLE_SCRAMBLE_DURATION_MS}
+                  />
+                </td>
                 <td>
                   {outliers.length > 0
                     ? outliers

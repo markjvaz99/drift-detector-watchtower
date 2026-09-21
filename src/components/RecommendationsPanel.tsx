@@ -11,6 +11,7 @@ import {
   setStoredApiKey,
 } from "../recommendations/apiKeyStore";
 import { Icon } from "./Icon";
+import { Spinner } from "./Spinner";
 
 export interface RecommendationsPanelProps {
   comparison: Comparison;
@@ -101,8 +102,13 @@ export function RecommendationsPanel({ comparison, runs }: RecommendationsPanelP
               Forget key
             </button>
           )}
-          <button type="button" className="btn btn-primary btn-sm" onClick={handleGenerateClick} disabled={loading}>
-            <Icon name="sparkle" size={13} />
+          <button
+            type="button"
+            className={`btn btn-primary btn-sm${loading ? " btn-loading" : ""}`}
+            onClick={handleGenerateClick}
+            disabled={loading}
+          >
+            {loading ? <Spinner size={13} /> : <Icon name="sparkle" size={13} />}
             {loading ? "Analyzing…" : "Generate executive summary"}
           </button>
         </div>

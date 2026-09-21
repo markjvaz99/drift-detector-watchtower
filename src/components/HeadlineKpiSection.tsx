@@ -2,14 +2,27 @@ import type { CSSProperties } from "react";
 import type { Comparison, DriftSeverity, Run } from "../types";
 import { identifyOutliers } from "../drift/identifyOutliers";
 import { runColor } from "../ui/runColors";
+import { AnimatedNumber } from "./AnimatedNumber";
 
 const SEVERITY_ACCENT_VAR: Record<DriftSeverity, string> = {
   "no-drift": "var(--signal-neutral)",
   moderate: "var(--signal-moderate)",
   large: "var(--signal-large)",
   categorical: "var(--signal-categorical)",
-  "cannot-determine": "var(--signal-neutral)",
-  uninterpretable: "var(--signal-neutral)",
+  "cannot-determine": "var(--signal-cannot-determine)",
+  uninterpretable: "var(--signal-uninterpretable)",
+};
+
+// Drives a subtle full-card background tint (not just the top border) so a
+// drifted headline card visually pops against the no-drift/neutral ones
+// instead of relying on a 3px border and a small badge alone.
+const SEVERITY_BG_VAR: Record<DriftSeverity, string> = {
+  "no-drift": "var(--surface-1)",
+  moderate: "var(--signal-moderate-bg)",
+  large: "var(--signal-large-bg)",
+  categorical: "var(--signal-categorical-bg)",
+  "cannot-determine": "var(--signal-cannot-determine-bg)",
+  uninterpretable: "var(--signal-uninterpretable-bg)",
 };
 
 const SEVERITY_BADGE_CLASS: Record<DriftSeverity, string> = {
@@ -17,8 +30,8 @@ const SEVERITY_BADGE_CLASS: Record<DriftSeverity, string> = {
   moderate: "signal-badge--moderate",
   large: "signal-badge--large",
   categorical: "signal-badge--categorical",
-  "cannot-determine": "signal-badge--neutral",
-  uninterpretable: "signal-badge--neutral",
+  "cannot-determine": "signal-badge--cannot-determine",
+  uninterpretable: "signal-badge--uninterpretable",
 };
 
 const SEVERITY_LABEL: Record<DriftSeverity, string> = {
@@ -70,7 +83,7 @@ export function HeadlineKpiSection({ comparison, runs, onViewFullTable }: Headli
   return (
     <section className="headline-kpi-section" aria-label="Headline drift summary">
       <ul className="headline-kpi-cards">
-        {comparison.headlineMetricKeys.map((key) => {
+        {comparison.headlineMetricKeys.map((key, cardIndex) => {
           const metric = metricByKey.get(key);
           const stats = statsByKey.get(key);
           const classification = classificationByKey.get(key);
@@ -87,22 +100,30 @@ export function HeadlineKpiSection({ comparison, runs, onViewFullTable }: Headli
               className="headline-kpi-card card"
               style={
                 classification
-                  ? ({ "--kpi-accent": SEVERITY_ACCENT_VAR[classification.severity] } as CSSProperties)
+                  ? ({
+                      "--kpi-accent": SEVERITY_ACCENT_VAR[classification.severity],
+                      "--kpi-bg-accent": SEVERITY_BG_VAR[classification.severity],
+                    } as CSSProperties)
                   : undefined
               }
             >
               <h3 className="kpi-label">{metric?.label ?? key}</h3>
               {isTwoRunNumeric ? (
                 <p className="kpi-values">
-                  <span style={{ color: runColor(0) }}>{formatNumber(valueA as number)}</span>
+                  <span style={{ color: runColor(0) }}>
+                    <AnimatedNumber text={formatNumber(valueA as number)} delay={800 + cardIndex * 350} />
+                  </span>
                   <span className="kpi-vs"> vs </span>
-                  <span style={{ color: runColor(1) }}>{formatNumber(valueB as number)}</span>
+                  <span style={{ color: runColor(1) }}>
+                    <AnimatedNumber text={formatNumber(valueB as number)} delay={800 + cardIndex * 350 + 350} />
+                  </span>
                 </p>
               ) : (
                 stats &&
                 runs.length > 2 && (
                   <p className="kpi-values">
-                    Range: {formatNumber(stats.min)}–{formatNumber(stats.max)}
+                    Range: <AnimatedNumber text={formatNumber(stats.min)} delay={800 + cardIndex * 350} />–
+                    <AnimatedNumber text={formatNumber(stats.max)} delay={800 + cardIndex * 350 + 350} />
                     {outliers.length > 0 && (
                       <>
                         {" "}

@@ -5,6 +5,7 @@ import type { BuiltRun } from "../parsing/buildRun";
 import { RecentComparisonsList } from "./RecentComparisonsList";
 import { importReport } from "../reporting/importReport";
 import { Icon } from "./Icon";
+import { Spinner } from "./Spinner";
 import type { Comparison, Run } from "../types";
 
 export interface UploadPanelProps {
@@ -115,6 +116,7 @@ export function UploadPanel({ onOpenRecent, onImportReport }: UploadPanelProps =
           </label>
           {isParsing && (
             <p role="status" className="upload-status">
+              <Spinner size={13} />
               Parsing…
             </p>
           )}
