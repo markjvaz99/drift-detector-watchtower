@@ -10,6 +10,7 @@ import { ToolUsageChart } from "../components/ToolUsageChart";
 import { DurationBreakdownChart } from "../components/DurationBreakdownChart";
 import { HeadlineKpiSection } from "../components/HeadlineKpiSection";
 import { DominantDriverPanel } from "../components/DominantDriverPanel";
+import { RecommendationsPanel } from "../components/RecommendationsPanel";
 import { ExportButton } from "../components/ExportButton";
 import { SignalLegend } from "../components/SignalLegend";
 import { Icon } from "../components/Icon";
@@ -93,6 +94,10 @@ export function ComparisonView({
               New comparison
             </button>
           )}
+          <button type="button" className="btn btn-ghost" onClick={() => window.print()}>
+            <Icon name="download" size={14} />
+            Download PDF
+          </button>
           <ExportButton comparison={comparison} runs={runs} />
         </div>
       </header>
@@ -124,6 +129,8 @@ export function ComparisonView({
       )}
 
       {comparison.dominantDriverFinding && <DominantDriverPanel finding={comparison.dominantDriverFinding} />}
+
+      <RecommendationsPanel comparison={comparison} runs={runs} />
 
       <div id="full-comparison-table" className="card">
         <p className="card-title">Full comparison</p>

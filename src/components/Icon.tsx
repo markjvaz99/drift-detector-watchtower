@@ -8,7 +8,10 @@ export type IconName =
   | "plus"
   | "external"
   | "history"
-  | "check-circle";
+  | "check-circle"
+  | "sparkle"
+  | "key"
+  | "close";
 
 const PATHS: Record<IconName, string> = {
   upload: "M12 16V4M12 4l-5 5M12 4l5 5M5 20h14",
@@ -21,6 +24,9 @@ const PATHS: Record<IconName, string> = {
   external: "M14 4h6v6M20 4l-9 9M8 5H5a1 1 0 00-1 1v13a1 1 0 001 1h13a1 1 0 001-1v-3",
   history: "M3 12a9 9 0 109-9 9.75 9.75 0 00-6.74 2.74L3 8M3 3v5h5M12 7v5l4 2",
   "check-circle": "M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z",
+  sparkle: "M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z",
+  key: "M15 7a4 4 0 10-3.9 5H15l2 2 2-2 2 2 2-2-2-2h-2.1A4 4 0 0015 7zM3 21l6-6",
+  close: "M6 6l12 12M18 6L6 18",
 };
 
 export interface IconProps {

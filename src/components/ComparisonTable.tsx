@@ -56,7 +56,7 @@ export function ComparisonTable({
           <th className="num">Spread</th>
           <th>Outlier</th>
           <th>Signal</th>
-          {showPinColumn && <th>Pin</th>}
+          {showPinColumn && <th className="col-pin">Pin</th>}
         </tr>
       </thead>
       <tbody>
@@ -120,7 +120,7 @@ export function ComparisonTable({
                   )}
                 </td>
                 {showPinColumn && (
-                  <td>
+                  <td className="col-pin">
                     <PinMetricToggle
                       metricKey={metric.key}
                       metricLabel={metric.label}

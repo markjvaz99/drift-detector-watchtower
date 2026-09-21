@@ -135,8 +135,8 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
-  margin: 0 -28px 24px;
+  padding: 12px 0;
+  margin: 0 -28px 18px;
   padding-left: 28px;
   padding-right: 28px;
   background: rgba(11, 13, 18, 0.92);
@@ -197,17 +197,23 @@ h3 {
   background: var(--surface-1);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 18px 20px;
+  padding: 14px 16px;
   box-shadow: var(--shadow-sm);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.card + .card {
-  margin-top: 20px;
+/* Vertical spacing between stacked full-width sections is set explicitly
+   per element below (not via a blind "adjacent .card" sibling selector) —
+   that selector used to also match .card elements meant to sit side by side
+   in a grid row (e.g. the two run-summary cards), pushing the second one
+   down and breaking row alignment. */
+#full-comparison-table,
+.single-run-metrics-card {
+  margin-top: 16px;
 }
 
 .card-title {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   margin: 0 0 2px;
   color: var(--text-primary);
@@ -215,16 +221,16 @@ h3 {
 }
 
 .card-subtitle {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted);
-  margin: 0 0 14px;
+  margin: 0 0 10px;
 }
 
 .section-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-top: 20px;
+  gap: 12px;
+  margin-top: 16px;
   align-items: stretch;
 }
 
@@ -242,8 +248,8 @@ h3 {
 .comparison-charts.section-grid-2 > .card {
   display: flex;
   flex-direction: column;
-  min-height: 340px;
-  max-height: 420px;
+  min-height: 270px;
+  max-height: 340px;
 }
 
 .comparison-charts .hbar-rows,
@@ -273,9 +279,9 @@ h3 {
   justify-content: center;
   gap: 6px;
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 600;
-  height: 32px;
+  height: 29px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
@@ -423,7 +429,7 @@ h3 {
 .comparison-table th,
 .comparison-table td {
   text-align: left;
-  padding: 9px 12px;
+  padding: 6.5px 10px;
   border-bottom: 1px solid var(--border);
   white-space: nowrap;
 }
@@ -483,7 +489,7 @@ h3 {
 /* --- Headline KPI tiles --- */
 
 .headline-kpi-section {
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .headline-kpi-cards {
@@ -495,7 +501,7 @@ h3 {
      row's full width instead of only occupying the left half and leaving
      the rest of the row empty next to the run-summary cards above it. */
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-  gap: 14px;
+  gap: 12px;
 }
 
 @media (max-width: 480px) {
@@ -507,7 +513,7 @@ h3 {
 .headline-kpi-card {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 7px;
   border-top: 3px solid var(--kpi-accent, var(--signal-neutral));
   transition: border-left-color 0.15s ease, border-right-color 0.15s ease, border-bottom-color 0.15s ease,
     transform 0.15s ease;
@@ -531,7 +537,7 @@ h3 {
 
 .kpi-values {
   margin: 0;
-  font-size: 25px;
+  font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.01em;
   font-family: var(--font-mono);
@@ -559,13 +565,13 @@ h3 {
 }
 
 .view-full-table-btn {
-  margin-top: 14px;
+  margin-top: 10px;
 }
 
 /* --- Root cause / session summary --- */
 
 .eyebrow {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-size: 10.5px;
   font-weight: 700;
   text-transform: uppercase;
@@ -579,11 +585,12 @@ h3 {
 
 .dominant-driver-panel {
   border-color: var(--border-strong);
+  margin-top: 16px;
 }
 
 .root-cause-explanation {
-  margin: 0 0 16px;
-  font-size: 16px;
+  margin: 0 0 12px;
+  font-size: 14.5px;
   font-weight: 600;
   line-height: 1.5;
   color: var(--text-primary);
@@ -594,9 +601,9 @@ h3 {
 .dominant-driver-numbers {
   list-style: none;
   margin: 0;
-  padding: 14px 0 0;
+  padding: 10px 0 0;
   display: flex;
-  gap: 32px;
+  gap: 26px;
   border-top: 1px solid var(--border);
 }
 
@@ -624,20 +631,20 @@ h3 {
 .run-summary-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 14px;
-  margin-bottom: 16px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 
 .run-summary-card {
   border-top: 3px solid;
-  padding-top: 15px;
+  padding-top: 12px;
 }
 
 .run-summary-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
   font-weight: 700;
   font-size: 13.5px;
 }
@@ -735,9 +742,9 @@ h3 {
 .signal-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 20px;
-  margin-top: 24px;
-  padding-top: 18px;
+  gap: 18px;
+  margin-top: 16px;
+  padding-top: 14px;
   border-top: 1px solid var(--border);
   font-size: 11.5px;
   color: var(--text-muted);
@@ -761,12 +768,12 @@ h3 {
 .hbar-rows {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
 .hbar-group-label {
-  margin: 0 0 6px;
-  font-size: 12.5px;
+  margin: 0 0 5px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
 }
@@ -775,12 +782,12 @@ h3 {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
 }
 
 .hbar-track {
   flex: 1;
-  height: 8px;
+  height: 7px;
   background: var(--surface-2);
   border-radius: 4px;
   overflow: hidden;
@@ -795,7 +802,7 @@ h3 {
 .hbar-value {
   width: 74px;
   text-align: right;
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-secondary);
   flex-shrink: 0;
   font-family: var(--font-mono);
@@ -811,13 +818,13 @@ h3 {
 }
 
 .chart-card-subtitle {
-  margin: 0 0 16px;
-  font-size: 12px;
+  margin: 0 0 10px;
+  font-size: 11.5px;
   color: var(--text-muted);
 }
 
 .chart-card-footnote {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
   font-size: 11.5px;
   display: flex;
   gap: 16px;
@@ -844,7 +851,7 @@ h3 {
 .duration-breakdown-rows {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 14px;
 }
 
 .duration-run-block .hbar-row {
@@ -1147,4 +1154,205 @@ h3 {
   padding: 7px 10px;
   font-family: var(--font-sans);
   font-size: 12.5px;
+}
+
+/* --- AI recommendations panel --- */
+
+.recommendations-panel {
+  margin-top: 16px;
+  border-color: var(--border-strong);
+}
+
+.recommendations-panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.recommendations-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.text-input {
+  background: var(--surface-2);
+  color: var(--text-primary);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  flex: 1;
+  min-width: 0;
+}
+
+.text-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.api-key-form {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.api-key-form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.api-key-form-hint {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.api-key-form-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recommendations-error {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--signal-large);
+}
+
+.recommendations-empty {
+  margin: 12px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.recommendations-summary-eyebrow {
+  margin-top: 14px;
+}
+
+.executive-summary-list {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.executive-summary-item {
+  padding-left: 4px;
+}
+
+.executive-summary-item::marker {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.executive-summary-text {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.executive-summary-text strong {
+  color: var(--text-primary);
+}
+
+.executive-summary-tags {
+  margin: 6px 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.recommendation-metric-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+}
+
+/* --- Print (PDF export via the browser's print dialog) ---
+   Reusing the app's CSS custom properties means every component that already
+   reads var(--surface-1)/var(--text-primary)/etc. picks up this light,
+   ink-friendly palette automatically — only the handful of hardcoded dark
+   values and interactive-only chrome need explicit overrides below. */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --surface-1: #ffffff;
+    --surface-2: #f4f5f7;
+    --surface-hover: #f4f5f7;
+    --border: #d8dbe2;
+    --border-strong: #b8bdc7;
+
+    --text-primary: #14161b;
+    --text-secondary: #3d4351;
+    --text-muted: #5b6272;
+
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-header: none;
+  }
+
+  .app-header {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    border-bottom: 2px solid var(--text-primary);
+  }
+
+  .app-header-actions,
+  .recommendations-panel-actions,
+  .api-key-form,
+  .recommendations-error,
+  .pairwise-selector,
+  .col-pin {
+    display: none !important;
+  }
+
+  .card,
+  .recommendation-card {
+    break-inside: avoid;
+  }
+
+  /* Chart tiles are height-capped with internal scrolling on screen so the
+     dashboard grid stays symmetric — print has no scrollbars, so anything
+     past that cap would simply be cut off. Let them grow to their content. */
+  .comparison-charts.section-grid-2 > .card {
+    max-height: none;
+  }
+
+  .comparison-charts .hbar-rows,
+  .comparison-charts .duration-breakdown-rows {
+    overflow: visible;
+  }
+
+  /* Nowrap cells make the table wider than a printable page once every run
+     column is in play; wrapping trades that for taller rows, which print
+     handles fine via page breaks. */
+  .comparison-table th,
+  .comparison-table td {
+    white-space: normal;
+  }
+
+  .table-scroll {
+    overflow: visible;
+  }
 }
