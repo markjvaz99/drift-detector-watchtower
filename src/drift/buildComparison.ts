@@ -37,7 +37,7 @@ export function buildComparison(
     return classification;
   });
 
-  const confoundFindings = detectConfoundFindings(runs, metrics, relatednessAssessment);
+  const confoundFindings = detectConfoundFindings(runs, metrics, relatednessAssessment, groupStatistics);
   driftClassifications = applyConfoundOverrides(driftClassifications, confoundFindings);
 
   const comparisonWithoutHeadline: Comparison = {

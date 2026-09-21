@@ -1,18 +1,37 @@
 import type {
   ConfoundFinding,
   DriftClassification,
+  GroupStatistics,
   Metric,
   RelatednessAssessment,
   Run,
 } from "../types";
 
-const RESENT_PROMPT_AFFECTED_KEYS = [
-  "turns",
-  "tokens_per_turn",
-  "total_tokens",
-  "cost_usd",
-  "tool_calls_per_turn",
+// Metrics a resent prompt can distort, and which quantified impact estimate
+// governs each: cost_usd tracks the abandoned calls' dollar cost directly;
+// the rest are turn-count-normalized (or turn-count itself), so the turn
+// impact is the relevant proxy for all of them.
+const RESENT_PROMPT_AFFECTED_KEYS: { key: string; impact: "cost" | "turns" }[] = [
+  { key: "turns", impact: "turns" },
+  { key: "tokens_per_turn", impact: "turns" },
+  { key: "total_tokens", impact: "turns" },
+  { key: "cost_usd", impact: "cost" },
+  { key: "tool_calls_per_turn", impact: "turns" },
 ];
+
+// A resent prompt shouldn't blanket-suppress a metric it can't plausibly
+// explain: if the abandoned attempt's estimated cost/turn impact accounts
+// for only a sliver of the actual gap between runs, that gap is real signal,
+// not resend noise. Only force "uninterpretable" when the confound could
+// plausibly account for a meaningful share of what's observed.
+const CONFOUND_SIGNIFICANCE_THRESHOLD = 0.3;
+
+function isConfoundSignificant(impact: number, stats: GroupStatistics | undefined): boolean {
+  if (!stats) return true; // no data to judge against — err toward the existing cautious behavior
+  const observedGap = stats.max - stats.min;
+  if (observedGap <= 0) return true; // no drift to wrongly suppress either way
+  return impact / observedGap >= CONFOUND_SIGNIFICANCE_THRESHOLD;
+}
 
 const MISMATCHED_REPO_AFFECTED_KEYS = [
   "net_chars_added",
@@ -26,18 +45,24 @@ export function detectConfoundFindings(
   runs: Run[],
   metrics: Metric[],
   relatednessAssessment: RelatednessAssessment | null,
+  groupStatistics: GroupStatistics[] = [],
 ): ConfoundFinding[] {
   const findings: ConfoundFinding[] = [];
+  const statsByKey = new Map(groupStatistics.map((s) => [s.metricKey, s]));
 
   for (const run of runs) {
     const resentPromptNote = run.dataQualityNotes.find((note) => note.type === "resent-prompt");
     if (resentPromptNote) {
+      const affectedMetricKeys = RESENT_PROMPT_AFFECTED_KEYS.filter(({ key, impact }) => {
+        if (!metrics.some((m) => m.key === key)) return false;
+        const estimatedImpact = impact === "cost" ? resentPromptNote.estimatedCostImpact : resentPromptNote.estimatedTurnImpact;
+        return isConfoundSignificant(estimatedImpact ?? 0, statsByKey.get(key));
+      }).map(({ key }) => key);
+
       findings.push({
         type: "resent-prompt",
         affectedRunIds: [run.id],
-        affectedMetricKeys: RESENT_PROMPT_AFFECTED_KEYS.filter((key) =>
-          metrics.some((m) => m.key === key),
-        ),
+        affectedMetricKeys,
         description: resentPromptNote.description,
         evidenceRefs: resentPromptNote.evidenceRefs,
         forcesUninterpretable: true,

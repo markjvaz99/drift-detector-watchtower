@@ -25,6 +25,6 @@ describe("RecentComparisonsList", () => {
     await waitFor(() => {
       expect(screen.getByText(comparison.title)).toBeInTheDocument();
     });
-    expect(screen.getByText(/Run 1, Run 2/)).toBeInTheDocument();
+    expect(screen.getByText(/Run 1 vs\. Run 2/)).toBeInTheDocument();
   });
 });
