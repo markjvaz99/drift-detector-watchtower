@@ -9,7 +9,6 @@ import { OverheadTrendChart } from "../components/OverheadTrendChart";
 import { ToolUsageChart } from "../components/ToolUsageChart";
 import { DurationBreakdownChart } from "../components/DurationBreakdownChart";
 import { HeadlineKpiSection } from "../components/HeadlineKpiSection";
-import { DominantDriverPanel } from "../components/DominantDriverPanel";
 import { RecommendationsPanel } from "../components/RecommendationsPanel";
 import { ExportButton } from "../components/ExportButton";
 import { SignalLegend } from "../components/SignalLegend";
@@ -119,6 +118,8 @@ export function ComparisonView({
         onViewFullTable={() => document.getElementById("full-comparison-table")?.scrollIntoView({ behavior: "smooth" })}
       />
 
+      <RecommendationsPanel comparison={comparison} runs={runs} />
+
       {!isReopened && (
         <section className="comparison-charts section-grid-2" aria-label="Comparison charts">
           <CacheIntensityChart runs={runs} logFilesById={logFilesById} />
@@ -127,10 +128,6 @@ export function ComparisonView({
           <DurationBreakdownChart runs={runs} logFilesById={logFilesById} />
         </section>
       )}
-
-      {comparison.dominantDriverFinding && <DominantDriverPanel finding={comparison.dominantDriverFinding} />}
-
-      <RecommendationsPanel comparison={comparison} runs={runs} />
 
       <div id="full-comparison-table" className="card">
         <p className="card-title">Full comparison</p>

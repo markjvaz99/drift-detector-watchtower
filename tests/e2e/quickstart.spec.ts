@@ -143,29 +143,7 @@ test.describe("Quickstart scenario 7 — export and recent comparisons", () => {
   });
 });
 
-test.describe("Quickstart scenario 8 — dominant-driver panel", () => {
-  test("names the dominant metric for a clear-driver comparison", async ({ page }) => {
-    await page.goto("/");
-    await page.locator("#log-upload").setInputFiles([
-      join(FIXTURES, "dominant-driver-clear/run-a.jsonl"),
-      join(FIXTURES, "dominant-driver-clear/run-b.jsonl"),
-    ]);
-    await page.getByRole("button", { name: /continue to comparison/i }).click();
-    await expect(page.getByRole("region", { name: /dominant driver/i })).toContainText("McpTool calls");
-  });
-
-  test("states no single dominant driver for a spread comparison", async ({ page }) => {
-    await page.goto("/");
-    await page.locator("#log-upload").setInputFiles([
-      join(FIXTURES, "dominant-driver-spread/run-a.jsonl"),
-      join(FIXTURES, "dominant-driver-spread/run-b.jsonl"),
-    ]);
-    await page.getByRole("button", { name: /continue to comparison/i }).click();
-    await expect(page.getByRole("region", { name: /dominant driver/i })).toContainText(
-      /no single dominant driver identified/i,
-    );
-  });
-
+test.describe("Quickstart scenario 8 — session summary", () => {
   test("shows a plain session summary for a single uploaded run", async ({ page }) => {
     await page.goto("/");
     await page.locator("#log-upload").setInputFiles(join(FIXTURES, "single-run-normal.jsonl"));
