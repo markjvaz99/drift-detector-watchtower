@@ -31,7 +31,7 @@ export function SingleRunView({ logFile, run }: SingleRunViewProps) {
       </header>
       <UnrecognizedEventsNotice runLabel={run.label} unrecognizedEventCount={logFile.unrecognizedEventCount} />
       <SessionSummaryPanel summary={sessionSummary} />
-      <div className="card">
+      <div className="card single-run-metrics-card">
         <p className="card-title">Metrics</p>
         <div className="table-scroll">
           <table className="comparison-table">

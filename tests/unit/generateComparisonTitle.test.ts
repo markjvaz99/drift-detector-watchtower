@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { generateComparisonTitle } from "../../src/drift/generateComparisonTitle";
-import type { Run } from "../../src/types";
+import type { LogFile, OrderedEvent, Run } from "../../src/types";
 
 function makeRun(taskPromptText: string): Run {
   return {
@@ -11,6 +11,23 @@ function makeRun(taskPromptText: string): Run {
     dataQualityNotes: [],
     rejectedToolCalls: [],
     hasCompletedTaskActivity: true,
+  };
+}
+
+function promptEvent(sequence: number, prompt: string): OrderedEvent {
+  return { sequence, timestamp: "2026-01-01T00:00:00Z", type: "user_prompt", queryType: null, attributes: { prompt } };
+}
+
+function makeLogFile(events: OrderedEvent[]): LogFile {
+  return {
+    id: "lf1",
+    fileName: "run.jsonl",
+    sessionIdentifier: "session-1",
+    buildVersion: "1.0.0",
+    workingDirectory: "/repo",
+    startingRepositoryState: { branch: null, headCommit: null, workingDirectory: "/repo" },
+    events,
+    unrecognizedEventCount: 0,
   };
 }
 
@@ -43,5 +60,17 @@ describe("generateComparisonTitle", () => {
     expect(title.toLowerCase()).not.toContain("content");
     expect(title.toLowerCase()).not.toContain("92c6");
     expect(title.toLowerCase()).toMatch(/simple|expense|tracker|codebase/);
+  });
+
+  it("titles from the real task description, not a trailing trivial prompt like /exit", () => {
+    const run = makeRun("/exit"); // taskPromptText is deliberately the LAST prompt (see buildRun.ts)
+    const logFile = makeLogFile([
+      promptEvent(1, "Implement a monthly-budget feature that lets users set spending limits per category."),
+      promptEvent(2, "start the server"),
+      promptEvent(3, "/exit"),
+    ]);
+    const title = generateComparisonTitle([run], new Map([[logFile.id, logFile]]));
+    expect(title.toLowerCase()).not.toBe("exit");
+    expect(title.toLowerCase()).toMatch(/budget|monthly|spending|category/);
   });
 });

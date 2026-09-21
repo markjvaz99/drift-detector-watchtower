@@ -91,7 +91,9 @@ test.describe("Quickstart scenario 4 — N-run comparison", () => {
     await page.locator("#log-upload").setInputFiles([1, 2, 3, 4, 5].map((i) => join(FIXTURES, `n-runs-outlier/run-${i}.jsonl`)));
     await page.getByRole("button", { name: /continue to comparison/i }).click();
 
-    await expect(page.getByRole("columnheader", { name: "Median" })).toBeVisible();
+    // Group statistics (min/max range + outlier) now show on the headline
+    // KPI cards rather than as separate table columns.
+    await expect(page.getByText(/Range:/).first()).toBeVisible();
     await expect(page.getByText(/Run 3/).first()).toBeVisible();
   });
 });

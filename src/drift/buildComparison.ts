@@ -42,7 +42,7 @@ export function buildComparison(
 
   const comparisonWithoutHeadline: Comparison = {
     runIds: runs.map((r) => r.id),
-    title: generateComparisonTitle(runs),
+    title: generateComparisonTitle(runs, logFilesById),
     relatednessAssessment,
     metrics,
     groupStatistics,

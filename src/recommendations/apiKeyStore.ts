@@ -31,16 +31,21 @@ export function clearStoredApiKey(): void {
 // when no key is saved yet, so local development doesn't need a manual paste.
 // Gated on import.meta.env.DEV — Vite inlines VITE_-prefixed vars into the
 // built JS bundle, so this must stay inert in any production build even if
-// the var is present at build time.
+// the var is present at build time. Also excluded under Vitest (DEV is true
+// there too): import.meta.env.VITEST is set automatically by Vitest, and
+// without this guard any test that renders a component depending on this
+// fallback would fire real, unintended calls to the Anthropic API.
+function devFallbackKey(): string | null {
+  if (!import.meta.env.DEV || import.meta.env.VITEST) return null;
+  return import.meta.env.VITE_ANTHROPIC_API_KEY ?? null;
+}
+
 export function isUsingDevFallbackKey(): boolean {
-  return import.meta.env.DEV && !getStoredApiKey() && Boolean(import.meta.env.VITE_ANTHROPIC_API_KEY);
+  return !getStoredApiKey() && Boolean(devFallbackKey());
 }
 
 export function getEffectiveApiKey(): string | null {
   const stored = getStoredApiKey();
   if (stored) return stored;
-  if (import.meta.env.DEV) {
-    return import.meta.env.VITE_ANTHROPIC_API_KEY ?? null;
-  }
-  return null;
+  return devFallbackKey();
 }

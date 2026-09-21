@@ -19,7 +19,7 @@ export function SignalLegend({ runs }: SignalLegendProps) {
         Large / categorical drift
       </span>
       <span className="legend-item">
-        <span className="legend-dot" style={{ background: "var(--signal-moderate)" }} />
+        <span className="legend-dot" style={{ background: "var(--signal-warning)" }} />
         Moderate drift
       </span>
       <span className="legend-item">

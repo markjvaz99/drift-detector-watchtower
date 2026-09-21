@@ -1,58 +1,40 @@
 import { useState } from "react";
-import Anthropic from "@anthropic-ai/sdk";
-import type { Comparison, Run } from "../types";
-import type { ExecutiveSummaryInsight } from "../recommendations/types";
-import { generateRecommendations } from "../recommendations/generateRecommendations";
+import type { Comparison, LogFile, Run } from "../types";
+import type { BusinessInsights } from "../recommendations/types";
+import { generateBusinessInsights } from "../recommendations/generateBusinessInsights";
 import {
   clearStoredApiKey,
   getEffectiveApiKey,
   getStoredApiKey,
-  isUsingDevFallbackKey,
   setStoredApiKey,
 } from "../recommendations/apiKeyStore";
+import { describeAnthropicError } from "../recommendations/describeAnthropicError";
+import { BusinessStatCard } from "./BusinessStatCard";
 import { Icon } from "./Icon";
 import { Spinner } from "./Spinner";
 
 export interface RecommendationsPanelProps {
   comparison: Comparison;
   runs: Run[];
+  logFilesById: Map<string, LogFile>;
 }
 
-function describeError(err: unknown): string {
-  if (err instanceof Anthropic.AuthenticationError) {
-    return "That API key was rejected. Check it and try again.";
-  }
-  if (err instanceof Anthropic.RateLimitError) {
-    return "Rate limited by the Anthropic API. Wait a moment and try again.";
-  }
-  if (err instanceof Anthropic.APIConnectionError) {
-    return "Couldn't reach the Anthropic API — check your connection.";
-  }
-  if (err instanceof Anthropic.APIError) {
-    return `Anthropic API error: ${err.message}`;
-  }
-  if (err instanceof Error) {
-    return err.message;
-  }
-  return "Something went wrong generating the executive summary.";
-}
-
-export function RecommendationsPanel({ comparison, runs }: RecommendationsPanelProps) {
+export function RecommendationsPanel({ comparison, runs, logFilesById }: RecommendationsPanelProps) {
   const [hasKey, setHasKey] = useState(() => Boolean(getStoredApiKey()));
   const [showKeyForm, setShowKeyForm] = useState(false);
   const [keyDraft, setKeyDraft] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [insights, setInsights] = useState<ExecutiveSummaryInsight[] | null>(null);
+  const [insights, setInsights] = useState<BusinessInsights | null>(null);
 
   async function runGeneration(apiKey: string) {
     setLoading(true);
     setError(null);
     try {
-      const result = await generateRecommendations(comparison, runs, apiKey);
+      const result = await generateBusinessInsights(comparison, runs, logFilesById, apiKey);
       setInsights(result);
     } catch (err) {
-      setError(describeError(err));
+      setError(describeAnthropicError(err));
     } finally {
       setLoading(false);
     }
@@ -85,14 +67,13 @@ export function RecommendationsPanel({ comparison, runs }: RecommendationsPanelP
   }
 
   return (
-    <section className="recommendations-panel card" aria-label="AI executive summary">
+    <section className="recommendations-panel card" aria-label="AI business insights">
       <div className="recommendations-panel-header">
         <div>
-          <p className="card-title">AI recommendations</p>
+          <p className="card-title">AI business insights</p>
           <p className="card-subtitle">
-            Sends the run prompts and metrics below to Claude for a root-cause executive summary of what
-            actually drove the difference between runs.
-            {isUsingDevFallbackKey() && " Using VITE_ANTHROPIC_API_KEY from .env.local (dev only)."}
+            Generate insights through AI to understand what changed between these runs, why it matters, and what
+            to do about it.
           </p>
         </div>
         <div className="recommendations-panel-actions">
@@ -109,7 +90,7 @@ export function RecommendationsPanel({ comparison, runs }: RecommendationsPanelP
             disabled={loading}
           >
             {loading ? <Spinner size={13} /> : <Icon name="sparkle" size={13} />}
-            {loading ? "Analyzing…" : "Generate executive summary"}
+            {loading ? "Analyzing…" : "Generate business insights"}
           </button>
         </div>
       </div>
@@ -161,31 +142,37 @@ export function RecommendationsPanel({ comparison, runs }: RecommendationsPanelP
         </p>
       )}
 
-      {insights && insights.length === 0 && !error && (
-        <p className="recommendations-empty">Nothing in this comparison warranted an executive summary.</p>
+      {insights && insights.businessStats.length === 0 && !error && (
+        <p className="recommendations-empty">Nothing in this comparison warranted a business insight.</p>
       )}
 
-      {insights && insights.length > 0 && (
+      {insights && (
         <>
-          <p className="eyebrow eyebrow--accent recommendations-summary-eyebrow">Executive summary</p>
-          <ol className="executive-summary-list">
-            {insights.map((insight, i) => (
-              <li key={i} className="executive-summary-item">
-                <p className="executive-summary-text">
-                  <strong>{insight.headline}</strong> {insight.detail}
-                </p>
-                {insight.supportingMetricKeys.length > 0 && (
-                  <p className="executive-summary-tags">
-                    {insight.supportingMetricKeys.map((key) => (
-                      <span key={key} className="recommendation-metric-tag">
-                        {key}
-                      </span>
-                    ))}
-                  </p>
-                )}
-              </li>
-            ))}
-          </ol>
+          <div className="recommended-action">
+            <p className="eyebrow eyebrow--accent">Recommended action</p>
+            <p className="recommended-action-text">{insights.recommendedAction}</p>
+          </div>
+
+          {insights.businessStats.length > 0 && (
+            <div className="business-stats-grid">
+              {insights.businessStats.map((stat) => (
+                <BusinessStatCard key={stat.id} stat={stat} />
+              ))}
+            </div>
+          )}
+
+          {insights.dataQualityCaveats.length > 0 && (
+            <div className="data-quality-caveats">
+              <p className="eyebrow">Data-quality caveats</p>
+              <ul className="data-quality-caveats-list">
+                {insights.dataQualityCaveats.map((caveat, i) => (
+                  <li key={i}>
+                    <strong>{caveat.issue}</strong> {caveat.impact}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </>
       )}
     </section>

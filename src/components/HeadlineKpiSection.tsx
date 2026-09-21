@@ -6,7 +6,7 @@ import { AnimatedNumber } from "./AnimatedNumber";
 
 const SEVERITY_ACCENT_VAR: Record<DriftSeverity, string> = {
   "no-drift": "var(--signal-neutral)",
-  moderate: "var(--signal-moderate)",
+  moderate: "var(--signal-warning)",
   large: "var(--signal-large)",
   categorical: "var(--signal-categorical)",
   "cannot-determine": "var(--signal-cannot-determine)",
@@ -18,7 +18,7 @@ const SEVERITY_ACCENT_VAR: Record<DriftSeverity, string> = {
 // instead of relying on a 3px border and a small badge alone.
 const SEVERITY_BG_VAR: Record<DriftSeverity, string> = {
   "no-drift": "var(--surface-1)",
-  moderate: "var(--signal-moderate-bg)",
+  moderate: "var(--signal-warning-bg)",
   large: "var(--signal-large-bg)",
   categorical: "var(--signal-categorical-bg)",
   "cannot-determine": "var(--signal-cannot-determine-bg)",

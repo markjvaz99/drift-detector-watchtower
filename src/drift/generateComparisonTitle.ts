@@ -1,4 +1,5 @@
-import type { Run } from "../types";
+import type { LogFile, Run } from "../types";
+import { extractPromptRecords } from "../parsing/extractPromptTexts";
 
 const STOPWORDS = new Set([
   "a", "an", "the", "this", "that", "and", "or", "to", "of", "in", "on", "for",
@@ -11,8 +12,26 @@ function titleCase(word: string): string {
   return word.charAt(0).toUpperCase() + word.slice(1);
 }
 
-export function generateComparisonTitle(runs: Run[]): string {
-  const sourcePrompt = runs.find((run) => run.taskPromptText.trim().length > 0)?.taskPromptText ?? "";
+// The longest real prompt across all runs is almost always the actual task
+// description — trailing operational prompts ("start the server", "/exit")
+// are short and would otherwise dominate if we just took the last one (or
+// the first run's taskPromptText, which is itself the *last* prompt of that
+// run — see src/parsing/buildRun.ts).
+function pickSourcePrompt(runs: Run[], logFilesById: Map<string, LogFile>): string {
+  const allPrompts = runs.flatMap((run) => {
+    const logFile = logFilesById.get(run.sourceLogFileId);
+    return logFile ? extractPromptRecords(logFile.events).map((record) => record.text) : [];
+  });
+  if (allPrompts.length > 0) {
+    return allPrompts.reduce((longest, text) => (text.length > longest.length ? text : longest), "");
+  }
+  // No raw events available (e.g. logFilesById wasn't populated) — fall back
+  // to whichever run's last-prompt field is non-empty.
+  return runs.find((run) => run.taskPromptText.trim().length > 0)?.taskPromptText ?? "";
+}
+
+export function generateComparisonTitle(runs: Run[], logFilesById: Map<string, LogFile> = new Map()): string {
+  const sourcePrompt = pickSourcePrompt(runs, logFilesById);
   if (!sourcePrompt) return "Comparison";
 
   const tokens = sourcePrompt

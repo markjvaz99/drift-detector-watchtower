@@ -2,7 +2,6 @@ import { Fragment, useState } from "react";
 import type { Comparison, LogFile, Run } from "../types";
 import type { EvidenceIndex } from "../parsing/evidenceIndex";
 import { findEvidenceForMetric } from "../drift/findEvidenceForMetric";
-import { identifyOutliers } from "../drift/identifyOutliers";
 import { EvidenceDrilldownPanel } from "./EvidenceDrilldownPanel";
 import { PinMetricToggle } from "./PinMetricToggle";
 import { SignalBadge } from "./SignalBadge";
@@ -47,10 +46,8 @@ export function ComparisonTable({
 }: ComparisonTableProps) {
   const [expandedMetricKey, setExpandedMetricKey] = useState<string | null>(null);
   const classificationByKey = new Map(comparison.driftClassifications.map((c) => [c.metricKey, c]));
-  const statsByKey = new Map(comparison.groupStatistics.map((s) => [s.metricKey, s]));
-  const labelByRunId = new Map(runs.map((run) => [run.id, run.label]));
   const showPinColumn = Boolean(onPinMetric && onUnpinMetric);
-  const colCount = runs.length + 7 + (showPinColumn ? 1 : 0);
+  const colCount = runs.length + 2 + (showPinColumn ? 1 : 0);
 
   return (
     <div className="table-scroll">
@@ -63,11 +60,6 @@ export function ComparisonTable({
               {run.label}
             </th>
           ))}
-          <th className="num">Min</th>
-          <th className="num">Median</th>
-          <th className="num">Max</th>
-          <th className="num">Spread</th>
-          <th>Outlier</th>
           <th>Signal</th>
           {showPinColumn && <th className="col-pin">Pin</th>}
         </tr>
@@ -75,8 +67,6 @@ export function ComparisonTable({
       <tbody>
         {comparison.metrics.map((metric, rowIndex) => {
           const classification = classificationByKey.get(metric.key);
-          const stats = statsByKey.get(metric.key);
-          const outliers = stats ? identifyOutliers(stats, metric) : [];
           const rowDelay = ROW_DELAY_LEAD_IN_MS + Math.min(rowIndex * ROW_DELAY_STEP_MS, ROW_DELAY_CAP_MS);
           return (
             <Fragment key={metric.key}>
@@ -116,41 +106,6 @@ export function ComparisonTable({
                     </td>
                   );
                 })}
-                <td className="num">
-                  <AnimatedNumber
-                    text={stats ? formatNumber(stats.min) : "—"}
-                    delay={rowDelay}
-                    duration={TABLE_SCRAMBLE_DURATION_MS}
-                  />
-                </td>
-                <td className="num">
-                  <AnimatedNumber
-                    text={stats ? formatNumber(stats.median) : "—"}
-                    delay={rowDelay}
-                    duration={TABLE_SCRAMBLE_DURATION_MS}
-                  />
-                </td>
-                <td className="num">
-                  <AnimatedNumber
-                    text={stats ? formatNumber(stats.max) : "—"}
-                    delay={rowDelay}
-                    duration={TABLE_SCRAMBLE_DURATION_MS}
-                  />
-                </td>
-                <td className="num">
-                  <AnimatedNumber
-                    text={stats ? formatNumber(stats.spread) : "—"}
-                    delay={rowDelay}
-                    duration={TABLE_SCRAMBLE_DURATION_MS}
-                  />
-                </td>
-                <td>
-                  {outliers.length > 0
-                    ? outliers
-                        .map((o) => `${labelByRunId.get(o.runId) ?? o.runId} (${formatNumber(o.value)})`)
-                        .join(", ")
-                    : "—"}
-                </td>
                 <td>
                   {classification && <SignalBadge severity={classification.severity} />}
                   {classification?.overriddenByConfound && (
