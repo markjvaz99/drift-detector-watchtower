@@ -23,17 +23,19 @@ export function RecentComparisonsList({ onOpen }: RecentComparisonsListProps) {
   if (entries.length === 0) return null;
 
   return (
-    <section className="recent-comparisons-list" aria-label="Recent comparisons">
-      <h2>
-        <Icon name="history" size={12} /> Recent comparisons
-      </h2>
+    <section className="card recent-comparisons-list" aria-label="Recent comparisons">
+      <p className="card-title">
+        <Icon name="history" size={13} /> Recent comparisons
+      </p>
       <ul>
         {entries.map((entry) => (
           <li key={entry.id}>
             <button type="button" onClick={() => onOpen(entry.id)}>
-              {entry.title}
+              <span className="recent-comparison-title">{entry.title}</span>
+              <span className="recent-comparison-meta">
+                {entry.runLabels.join(" vs. ")} · {new Date(entry.createdAt).toLocaleString()}
+              </span>
             </button>
-            <span> — {entry.runLabels.join(", ")} — {new Date(entry.createdAt).toLocaleString()}</span>
           </li>
         ))}
       </ul>

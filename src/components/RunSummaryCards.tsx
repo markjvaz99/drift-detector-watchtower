@@ -44,6 +44,14 @@ export function RunSummaryCards({ runs, logFilesById, comparison }: RunSummaryCa
                 <dd>{metricValue(comparison, run.id, "tool_calls")}</dd>
               </div>
             </dl>
+            {run.taskPromptText.trim().length > 0 ? (
+              <details className="run-summary-prompt">
+                <summary>View full prompt</summary>
+                <div className="run-summary-prompt-text">{run.taskPromptText}</div>
+              </details>
+            ) : (
+              <p className="run-summary-prompt-empty">No prompt captured for this run.</p>
+            )}
           </div>
         );
       })}
