@@ -4,15 +4,12 @@ import { parseJsonlText } from "./readJsonl";
 import { isMainTaskApiCall } from "./excludeNonTaskCalls";
 import { detectResentPrompt } from "./detectResentPrompt";
 import { pairToolCalls } from "./pairToolCalls";
+import { extractPromptRecords } from "./extractPromptTexts";
 import type { LogFile, Run } from "../types";
 
 export interface BuiltRun {
   logFile: LogFile;
   run: Run;
-}
-
-function asString(value: unknown, fallback = ""): string {
-  return typeof value === "string" ? value : fallback;
 }
 
 export function buildRunFromText(fileName: string, text: string): BuiltRun {
@@ -34,13 +31,13 @@ export function buildRunFromText(fileName: string, text: string): BuiltRun {
     unrecognizedEventTimestamps: flattened.unrecognizedEventTimestamps,
   };
 
-  const promptEvents = events.filter((event) => event.type === "user_prompt");
-  const lastPromptAttrs = promptEvents[promptEvents.length - 1]?.attributes;
-  // Real telemetry carries the prompt text as "prompt"; synthetic fixtures
-  // (and the original spec's assumed schema) use "prompt_text".
-  const taskPromptText = lastPromptAttrs
-    ? asString(lastPromptAttrs["prompt"]) || asString(lastPromptAttrs["prompt_text"])
-    : "";
+  // The task prompt is deliberately the LAST user_prompt event, not the
+  // first: an incomplete prompt followed by a corrected resend (see
+  // detectResentPrompt below) means the final one is the one actually acted
+  // on. Consumers that need every prompt the user sent — not just this
+  // "effective" one — read extractPromptRecords(logFile.events) directly.
+  const promptRecords = extractPromptRecords(events);
+  const taskPromptText = promptRecords[promptRecords.length - 1]?.text ?? "";
 
   const resentPromptNote = detectResentPrompt(events, logFileId, flattened.sessionIdentifier);
   const dataQualityNotes = resentPromptNote ? [resentPromptNote] : [];
