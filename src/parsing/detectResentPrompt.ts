@@ -1,4 +1,5 @@
 import type { DataQualityNote, EvidenceReference, OrderedEvent } from "../types";
+import { extractPromptRecords } from "./extractPromptTexts";
 
 // A session with several user_prompt events isn't necessarily a data-quality
 // defect — it's often just genuine multi-turn use (a detailed task prompt,
@@ -19,7 +20,10 @@ export function detectResentPrompt(
   logFileId: string,
   sessionIdentifier: string,
 ): DataQualityNote | null {
-  const prompts = events.filter((event) => event.type === "user_prompt");
+  // extractPromptRecords excludes system-injected content (e.g. a background
+  // task-completion notice) that isn't something the user actually typed —
+  // detecting a "resend" against those would be meaningless.
+  const prompts = extractPromptRecords(events);
   if (prompts.length < 2) return null;
 
   const resentPairs: ResentPair[] = [];

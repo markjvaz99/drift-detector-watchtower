@@ -7,16 +7,17 @@ import type {
   Run,
 } from "../types";
 
-// Metrics a resent prompt can distort, and which quantified impact estimate
-// governs each: cost_usd tracks the abandoned calls' dollar cost directly;
-// the rest are turn-count-normalized (or turn-count itself), so the turn
-// impact is the relevant proxy for all of them.
+// Metrics a resent prompt can distort — deliberately absolute-count metrics
+// only. A resend adds extra turns, cost, and tokens roughly proportionally,
+// so per-turn RATIO metrics (tokens_per_turn, tool_calls_per_turn) aren't
+// meaningfully skewed by it even though the totals are; including them here
+// previously compared a raw turn-count impact against those metrics' own
+// (tiny, ratio-scale) gap, which is a dimensional mismatch that made almost
+// any nonzero resend look "significant" regardless of its real size.
 const RESENT_PROMPT_AFFECTED_KEYS: { key: string; impact: "cost" | "turns" }[] = [
   { key: "turns", impact: "turns" },
-  { key: "tokens_per_turn", impact: "turns" },
   { key: "total_tokens", impact: "turns" },
   { key: "cost_usd", impact: "cost" },
-  { key: "tool_calls_per_turn", impact: "turns" },
 ];
 
 // A resent prompt shouldn't blanket-suppress a metric it can't plausibly
