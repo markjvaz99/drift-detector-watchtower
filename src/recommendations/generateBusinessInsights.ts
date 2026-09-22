@@ -69,7 +69,8 @@ Selecting business stats:
   workload card plus, if genuinely distinct, one tool-usage or data-quality card is usually enough.
 - Prioritize by the size of the observed gap (ratioSpread) and whether the metric is actually interpretable on
   its own (check "severity" and "confound" — a candidate whose classification is "uninterpretable" or carries a
-  confound needs that reflected in its caveat and confidence, or should be skipped in favor of a cleaner story).
+  confound should generally be skipped in favor of a cleaner story, or the confound mentioned directly in its
+  explanation if it's featured anyway).
 - For any candidate with a pairedMetricKey, read it through the default interpretive lens above: use the
   paired efficiency metric's closeness to reinforce the "more steps needed, not more expensive steps" story
   when a prompt-detail gap is present, rather than to dismiss the finding.
@@ -87,11 +88,8 @@ elaborate elsewhere, so don't hold detail back:
   this should be a concrete prompting recommendation (e.g. "specify scope, constraints, and acceptance criteria
   up front" — grounded in the actual char-count gap, not invented specifics about what was missing) rather than
   a vague "investigate why this happened." Set to null only when genuinely nothing in the data points toward
-  any action.
-- confidence: high/medium/low, reflecting how directly the data supports the claim — lower it when a confound
-  or data-quality note affects this metric.
-- caveat: set when a confound, data-quality note, or relatedness note qualifies this metric's interpretation;
-  null otherwise.
+  any action. If a confound or data-quality note qualifies this metric's interpretation, fold that directly into
+  explanation or businessImplication rather than treating it as a separate field.
 
 Data quality:
 - If any run has dataQualityNotes, you MUST reflect them in dataQualityCaveats using their real description and
@@ -161,8 +159,6 @@ export async function generateBusinessInsights(
         explanation: entry.explanation,
         businessImplication: entry.businessImplication,
         recommendation: entry.recommendation,
-        confidence: entry.confidence,
-        caveat: entry.caveat,
       };
     })
     .filter((stat): stat is BusinessStat => stat !== null);

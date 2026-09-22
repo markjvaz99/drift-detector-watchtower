@@ -68,20 +68,6 @@ export function BusinessStatCard({ stat }: BusinessStatCardProps) {
           {stat.recommendation}
         </p>
       )}
-
-      <footer className="business-stat-meta">
-        <span className="business-stat-meta-item">
-          Source: <code>{stat.metricKey}</code>
-        </span>
-        <span className="business-stat-meta-item">Confidence: {stat.confidence}</span>
-      </footer>
-
-      {stat.caveat && (
-        <p className="business-stat-caveat">
-          <Icon name="warning" size={12} />
-          {stat.caveat}
-        </p>
-      )}
     </article>
   );
 }

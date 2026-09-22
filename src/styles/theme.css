@@ -1898,32 +1898,6 @@ h3 {
   line-height: 1.5;
 }
 
-.business-stat-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 2px;
-}
-
-.business-stat-meta-item {
-  font-size: 10.5px;
-  color: var(--text-muted);
-}
-
-.business-stat-meta-item code {
-  font-family: var(--font-mono);
-}
-
-.business-stat-caveat {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 0;
-  font-size: 11.5px;
-  color: var(--signal-warning);
-  line-height: 1.5;
-}
-
 .data-quality-caveats {
   margin-top: 14px;
   padding-top: 12px;

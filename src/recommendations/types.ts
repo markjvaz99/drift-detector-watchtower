@@ -15,9 +15,6 @@ export type BusinessStatCategory = z.infer<typeof BusinessStatCategorySchema>;
 export const ImpactLevelSchema = z.enum(["high", "medium", "low", "informational"]);
 export type ImpactLevel = z.infer<typeof ImpactLevelSchema>;
 
-export const ConfidenceLevelSchema = z.enum(["high", "medium", "low"]);
-export type ConfidenceLevel = z.infer<typeof ConfidenceLevelSchema>;
-
 // What the model must return: narrative content plus a reference to one of
 // the precomputed business-stat candidates (by metricKey). The model never
 // generates the numbers themselves — only picks which candidate to feature
@@ -32,8 +29,6 @@ export const SelectedBusinessStatSchema = z.object({
   explanation: z.string(),
   businessImplication: z.string(),
   recommendation: z.string().nullable(),
-  confidence: ConfidenceLevelSchema,
-  caveat: z.string().nullable(),
 });
 export type SelectedBusinessStat = z.infer<typeof SelectedBusinessStatSchema>;
 
@@ -73,8 +68,6 @@ export interface BusinessStat {
   explanation: string;
   businessImplication: string;
   recommendation: string | null;
-  confidence: ConfidenceLevel;
-  caveat: string | null;
 }
 
 export interface BusinessInsights {
