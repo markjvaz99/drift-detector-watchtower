@@ -271,10 +271,11 @@ documented primarily in this file and `Dashboard_Readme.md` rather than in that 
   drift classification, confound detection, relatedness assessment — runs synchronously (or in a Web Worker) in
   the user's own browser tab.
 - **No telemetry upload, ever, except the user's own explicit AI calls.** Uploaded log files and everything
-  derived from them stay in memory and, for history, in the browser's local IndexedDB. The parsing pipeline can
-  install a network-egress guard (`src/parsing/assertNoNetworkEgress.ts`) that throws if `fetch` or
-  `XMLHttpRequest` is ever attempted during ingestion/analysis, enforcing this as a hard invariant rather than
-  just a policy.
+  derived from them stay in memory and, for history, in the browser's local IndexedDB. A network-egress guard
+  (`src/parsing/assertNoNetworkEgress.ts`) replaces `fetch` and `XMLHttpRequest` with functions that throw; it
+  is installed only in tests (the relatedness and dominant-driver unit tests), not in the running app, and
+  `tests/e2e/no-network-egress.spec.ts` separately asserts zero external requests in a real browser with no
+  API key configured.
 - **AI calls are opt-in and direct.** The only network requests this app ever makes are calls to
   `api.anthropic.com`, made only after the user has supplied their own API key, and only when they click a
   "Generate" / "Suggest" action (or, for naming, once automatically per comparison — only if a key is already
