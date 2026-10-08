@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import { join } from "node:path";
+import { readFileSync } from "node:fs";
+import { buildRunFromText } from "../../src/parsing/buildRun";
 import { loadFixtureRun } from "../helpers/loadFixtureRun";
 import { EvidenceIndex } from "../../src/parsing/evidenceIndex";
 import { ComparisonView } from "../../src/pages/ComparisonView";
@@ -11,17 +13,22 @@ describe("ComparisonView — headline with exactly one drifted metric", () => {
   it("shows only that metric in the headline while the full table still lists everything", () => {
     const a = loadFixtureRun(join(FIXTURES, "run-a.jsonl"), "Run 1");
     const b = loadFixtureRun(join(FIXTURES, "run-b.jsonl"), "Run 2");
+    // Run-count gate: drift is only labelled with >= 3 runs, so add a copy of run-a.
+    const aCopy = buildRunFromText("run-a-copy.jsonl", readFileSync(join(FIXTURES, "run-a.jsonl"), "utf8"));
+    aCopy.run.label = "Run 3";
     const logFilesById = new Map([
       [a.logFile.id, a.logFile],
       [b.logFile.id, b.logFile],
+      [aCopy.logFile.id, aCopy.logFile],
     ]);
     const evidenceIndex = new EvidenceIndex();
     evidenceIndex.register(a.logFile);
     evidenceIndex.register(b.logFile);
+    evidenceIndex.register(aCopy.logFile);
 
     render(
       <ComparisonView
-        runs={[a.run, b.run]}
+        runs={[a.run, b.run, aCopy.run]}
         logFilesById={logFilesById}
         relatednessAssessment={null}
         evidenceIndex={evidenceIndex}

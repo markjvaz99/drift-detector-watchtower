@@ -1,6 +1,7 @@
 import type { Comparison, DominantDriverFinding, LogFile, Metric, Run } from "../types";
 import type { DominantDriverSelection } from "./selectDominantDriver";
 import { findEvidenceForMetric } from "../drift/findEvidenceForMetric";
+import { isBelowRunCountGate, MIN_RUNS_FOR_DRIFT } from "../drift/runCountGate";
 
 const NO_DOMINANT_DRIVER_MESSAGE =
   "No single dominant driver identified; see the full comparison table for the complete picture.";
@@ -27,6 +28,17 @@ export function composeExplanation(
   runs: Run[],
   logFilesById: Map<string, LogFile>,
 ): DominantDriverFinding {
+  if (isBelowRunCountGate(runs.length)) {
+    return {
+      hasDominantDriver: false,
+      metricKey: null,
+      explanation: `Dominant driver not assessed: ${runs.length} run${runs.length === 1 ? "" : "s"} provided, and at least ${MIN_RUNS_FOR_DRIFT} are needed to label drift.`,
+      supportingEvidence: [],
+      supportingNumbers: [],
+      supportingNumberLabels: [],
+    };
+  }
+
   if (!selection.hasDominantDriver || !selection.metricKey) {
     return {
       hasDominantDriver: false,

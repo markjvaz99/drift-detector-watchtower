@@ -4,6 +4,7 @@ import { computeAllGroupStatistics } from "./groupStatistics";
 import { classifySeverityFromStatistics } from "./classifySeverity";
 import { isCategoricalToolUsageDifference } from "./categoricalDifference";
 import { detectConfoundFindings, applyConfoundOverrides } from "./applyConfoundOverrides";
+import { applyRunCountGate } from "./runCountGate";
 import { generateComparisonTitle } from "./generateComparisonTitle";
 import { buildHeadline } from "./buildHeadline";
 import { selectDominantDriver } from "../dominant-driver/selectDominantDriver";
@@ -39,6 +40,7 @@ export function buildComparison(
 
   const confoundFindings = detectConfoundFindings(runs, metrics, relatednessAssessment, groupStatistics);
   driftClassifications = applyConfoundOverrides(driftClassifications, confoundFindings);
+  driftClassifications = applyRunCountGate(driftClassifications, runs.length);
 
   const comparisonWithoutHeadline: Comparison = {
     runIds: runs.map((r) => r.id),

@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { selectDominantDriver } from "../../src/dominant-driver/selectDominantDriver";
 import { composeExplanation } from "../../src/dominant-driver/composeExplanation";
-import type { Comparison, DriftClassification, GroupStatistics } from "../../src/types";
+import type { Comparison, DriftClassification, GroupStatistics, Run } from "../../src/types";
+
+const threeRuns = ["a", "b", "c"].map((id) => ({ id }) as Run);
 
 function classification(metricKey: string, severity: DriftClassification["severity"]): DriftClassification {
   return { metricKey, severity, basis: "", overriddenByConfound: null };
@@ -51,7 +53,7 @@ describe("dominant-driver 'no dominant driver' fallback", () => {
       groupStatistics: [stats("m1", 5), stats("m2", 4)],
     });
     const selection = selectDominantDriver(comparison);
-    const finding = composeExplanation(comparison, selection, [], new Map());
+    const finding = composeExplanation(comparison, selection, threeRuns, new Map());
 
     expect(finding.hasDominantDriver).toBe(false);
     expect(finding.metricKey).toBeNull();
