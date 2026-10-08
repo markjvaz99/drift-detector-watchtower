@@ -42,6 +42,10 @@ Open the printed local URL and upload one or more `.jsonl` log files. No server 
 | `npm run test:e2e` | End-to-end tests (Playwright, requires `npx playwright install chromium` once) |
 | `npm run lint` | ESLint |
 
+## Run-count gate
+
+Drift is only labelled when a comparison contains at least 3 runs. With fewer, every metric's severity is shown as "cannot determine" (including metrics that would otherwise read "no drift" or "categorical"), and the dominant-driver panel states that it was not assessed. Metrics already marked uninterpretable by a confound keep that label. The threshold is `MIN_RUNS_FOR_DRIFT` in `src/drift/runCountGate.ts`. The tool compares one group of runs, so the count applies to the whole comparison.
+
 ## Architecture overview
 
 The app is a single-page React + Vite application with no backend. Full technical context and rationale live in `specs/001-telemetry-drift-detector/plan.md`; the summary:
@@ -67,3 +71,7 @@ Tests are organized to match the project's TDD approach:
 - `tests/fixtures/` — `.jsonl` OTLP fixture files (regenerate with `node tests/fixtures/generate.mjs`).
 
 See `specs/001-telemetry-drift-detector/` for the full spec, plan, data model, and contracts this implementation follows.
+
+## Authorship
+
+Specified, designed and verified by Mark Vaz; code written with Claude Code.
